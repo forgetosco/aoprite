@@ -1,0 +1,4992 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <title>AOprite — Editor de Pixel Art (Etapa 1)</title>
+    <meta name="description" content="Editor de pixel art independente otimizado para Android e telas sensíveis ao toque, com paleta oficial PICO-8 de 16 cores, ferramentas de desenho e formato de projeto .aop." />
+    <meta property="og:title" content="AOprite — Editor de Pixel Art (Etapa 1)" />
+    <meta property="og:description" content="Editor de pixel art independente otimizado para Android e telas sensíveis ao toque, com paleta oficial PICO-8 de 16 cores, ferramentas de desenho e formato de projeto .aop." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="theme-color" content="#161922" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="AOprite" />
+    <meta name="author" content="Forge Tosco" />
+    <meta name="copyright" content="Copyright (c) 2026 Forge Tosco — MIT License" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' shape-rendering='crispEdges'%3E%3Crect width='16' height='16' fill='%231D2B53'/%3E%3Crect x='1' y='1' width='14' height='14' fill='%2329ADFF'/%3E%3Crect x='2' y='2' width='12' height='12' fill='%230D0F14'/%3E%3Crect x='3' y='3' width='2' height='2' fill='%23FF004D'/%3E%3Crect x='5' y='3' width='2' height='2' fill='%23FFA300'/%3E%3Crect x='7' y='3' width='2' height='2' fill='%23FFEC27'/%3E%3Crect x='9' y='3' width='2' height='2' fill='%2300E436'/%3E%3Crect x='11' y='3' width='2' height='2' fill='%2383769C'/%3E%3Crect x='4' y='7' width='4' height='4' fill='%23FF004D'/%3E%3Crect x='9' y='7' width='3' height='3' fill='%23FFA300'/%3E%3C/svg%3E" />
+    <link rel="manifest" href="./manifest.json" id="aop-manifest-link" />
+    <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" id="aop-apple-icon-link" />
+    <script>
+      if (window.location && window.location.protocol === 'file:') {
+        var ml = document.getElementById('aop-manifest-link');
+        if (ml && ml.parentNode) ml.parentNode.removeChild(ml);
+        var al = document.getElementById('aop-apple-icon-link');
+        if (al && al.parentNode) al.parentNode.removeChild(al);
+      }
+    </script>
+    <style>
+/*
+ * ============================================================================
+ * AOprite — Editor de Pixel Art e Animações (Etapa 3 — Versão Consolidada)
+ * Estúdio e titular dos direitos autorais: Forge Tosco (2026) — Licença MIT
+ * Identidade visual própria inspirada em hardware tático de pixel art.
+ * Otimizado prioritariamente para Android (Retrato) e adaptável a Paisagem.
+ * Zero dependências externas. Funciona 100% offline (HTML local e PWA).
+ * ============================================================================
+ */
+:root {
+  --bg-deep: #0d0f14;
+  --bg-panel: #161922;
+  --bg-elevated: #1f2430;
+  --bg-button: #262c3a;
+  --bg-button-hover: #31384a;
+  --border-subtle: #2c3344;
+  --border-strong: #454f66;
+  --text-primary: #fff1e8;
+  --text-secondary: #c2c3c7;
+  --text-muted: #83769c;
+  --accent-amber: #ffa300;
+  --accent-yellow: #ffec27;
+  --accent-cyan: #29adff;
+  --accent-green: #00e436;
+  --accent-red: #ff004d;
+  --checker-a: #1b1f2a;
+  --checker-b: #252a38;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  min-height: 100dvh;
+  overflow: hidden;
+  background-color: var(--bg-deep);
+  color: var(--text-primary);
+  font-family: "Courier New", Courier, monospace;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  overscroll-behavior: none;
+  touch-action: manipulation;
+}
+
+button,
+input {
+  font-family: inherit;
+  color: inherit;
+}
+
+/* ============================================================================
+   SHELL PRINCIPAL E LAYOUT ADAPTATIVO (RETRATO PRIORITÁRIO + PAISAGEM)
+   ============================================================================ */
+.aop-shell {
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-deep);
+  position: relative;
+  overflow: hidden;
+}
+
+/* CABEÇALHO COMPACTO */
+.aop-header {
+  flex: 0 0 auto;
+  min-height: 38px;
+  padding: 3px 8px;
+  background-color: var(--bg-panel);
+  border-bottom: 2px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  z-index: 20;
+}
+
+.aop-brand-cluster {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  flex-shrink: 1;
+}
+
+.aop-logo-mark {
+  width: 15px;
+  height: 15px;
+  background: linear-gradient(135deg, var(--accent-amber) 0%, var(--accent-red) 100%);
+  border: 2px solid var(--text-primary);
+  box-shadow: 2px 2px 0 #000000;
+  flex-shrink: 0;
+}
+
+.aop-brand-title {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.aop-status-strip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.aop-status-sep {
+  color: var(--border-strong);
+}
+
+.aop-grid-indicator {
+  font-weight: 700;
+  color: var(--accent-yellow);
+  background-color: #1d2b53;
+  border: 1px solid var(--accent-cyan);
+  padding: 1px 5px;
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+.aop-project-label {
+  color: var(--text-secondary);
+  max-width: 92px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.aop-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.aop-top-btn {
+  appearance: none;
+  min-height: 30px;
+  padding: 3px 7px;
+  background-color: var(--bg-button);
+  border: 2px solid var(--border-strong);
+  color: var(--text-primary);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  white-space: nowrap;
+  box-shadow: 0 2px 0 #000000;
+  touch-action: manipulation;
+}
+
+.aop-top-btn:hover {
+  background-color: var(--bg-button-hover);
+  border-color: var(--accent-cyan);
+}
+
+.aop-top-btn:active {
+  transform: translateY(1px);
+  box-shadow: 0 1px 0 #000000;
+}
+
+.aop-top-btn-primary {
+  background-color: #1d2b53;
+  border-color: var(--accent-cyan);
+  color: var(--text-primary);
+}
+
+.aop-top-btn-accent {
+  background-color: #7e2553;
+  border-color: var(--accent-amber);
+}
+
+.aop-top-btn-fullscreen[aria-pressed="true"] {
+  background-color: #008751;
+  border-color: var(--accent-yellow);
+  color: var(--accent-yellow);
+}
+
+.aop-btn-icon {
+  width: 12px;
+  height: 12px;
+  fill: currentColor;
+  flex-shrink: 0;
+  pointer-events: none;
+}
+
+/* ============================================================================
+    CORPO DO EDITOR (WORKSPACE)
+   ============================================================================ */
+.aop-main {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ÁREA CENTRAL DO CANVAS */
+.aop-stage-section {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-deep);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Barra superior do palco: Indicador de Cor Ativa + Controles de Zoom e Grade */
+.aop-stage-bar {
+  flex: 0 0 auto;
+  min-height: 32px;
+  padding: 2px 8px;
+  background-color: rgba(22, 25, 34, 0.94);
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  z-index: 10;
+}
+
+.aop-active-color-readout {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.aop-color-preview-box {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--text-primary);
+  box-shadow: 0 0 0 1px #000000;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.aop-color-preview-box[data-transparent="true"] {
+  background-image:
+    linear-gradient(45deg, #5f574f 25%, transparent 25%),
+    linear-gradient(-45deg, #5f574f 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #5f574f 75%),
+    linear-gradient(-45deg, transparent 75%, #5f574f 75%);
+  background-size: 8px 8px;
+  background-position: 0 0, 0 4px, 4px -4px, -4px 0;
+}
+
+.aop-color-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.aop-color-index-tag {
+  font-weight: 700;
+  color: var(--accent-yellow);
+  font-variant-numeric: tabular-nums;
+}
+
+.aop-color-hex-tag {
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.aop-coord-readout {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.aop-zoom-controls {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.aop-mini-btn {
+  appearance: none;
+  min-width: 28px;
+  min-height: 26px;
+  padding: 2px 6px;
+  background-color: var(--bg-button);
+  border: 1px solid var(--border-strong);
+  color: var(--text-primary);
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: manipulation;
+}
+
+.aop-mini-btn:hover:not(:disabled) {
+  border-color: var(--accent-cyan);
+}
+
+.aop-mini-btn:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+}
+
+.aop-mini-btn[aria-pressed="true"] {
+  background-color: #1d2b53;
+  border-color: var(--accent-cyan);
+  color: var(--accent-yellow);
+}
+
+.aop-zoom-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  min-width: 30px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Barra contextual da Ferramenta de Seleção Livre (LAÇO) */
+.aop-lasso-bar {
+  flex: 0 0 auto;
+  min-height: 30px;
+  padding: 2px 8px;
+  background-color: #192236;
+  border-bottom: 1px solid var(--accent-cyan);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  z-index: 12;
+}
+
+.aop-lasso-bar[hidden] {
+  display: none !important;
+}
+
+.aop-lasso-status {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: var(--accent-yellow);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.aop-lasso-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+/* Viewport onde o Canvas fica centralizado */
+.aop-canvas-viewport {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  overflow: auto;
+  position: relative;
+  touch-action: none;
+  background:
+    radial-gradient(circle at center, #181c26 0%, #0d0f14 100%);
+}
+
+.aop-canvas-frame {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--accent-amber);
+  box-shadow: 0 0 0 2px #000000, 0 6px 18px rgba(0, 0, 0, 0.65);
+  background-color: var(--checker-a);
+  touch-action: none;
+  flex-shrink: 0;
+}
+
+#aop-canvas {
+  display: block;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  image-rendering: pixelated;
+  touch-action: none;
+  cursor: crosshair;
+}
+
+/* ============================================================================
+   ETAPA 2: TIMELINE COMPACTA DE ANIMAÇÕES
+   ============================================================================ */
+.aop-timeline-bar {
+  flex: 0 0 auto;
+  background-color: var(--bg-elevated);
+  border-top: 2px solid var(--border-subtle);
+  padding: 3px 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  z-index: 14;
+}
+
+.aop-timeline-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  width: 100%;
+}
+
+.aop-timeline-transport {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.aop-fps-badge {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: var(--accent-yellow);
+  min-width: 36px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  padding: 0 2px;
+}
+
+.aop-frames-strip {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  overflow-x: auto;
+  padding: 1px 0;
+  touch-action: pan-x;
+}
+
+.aop-frame-item {
+  appearance: none;
+  flex: 0 0 auto;
+  min-width: 38px;
+  height: 26px;
+  padding: 2px 4px;
+  background-color: var(--bg-deep);
+  border: 2px solid var(--border-strong);
+  color: var(--text-secondary);
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.aop-frame-item[aria-selected="true"] {
+  border-color: var(--accent-amber);
+  background-color: #1d2b53;
+  color: var(--accent-yellow);
+  box-shadow: 0 0 0 1px #000000;
+}
+
+.aop-frame-thumb {
+  width: 18px;
+  height: 18px;
+  border: 1px solid #000000;
+  background-color: var(--checker-a);
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  flex-shrink: 0;
+}
+
+.aop-frame-num {
+  font-size: 9px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.aop-timeline-ops {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+/* ============================================================================
+   PAINEL INFERIOR / LATERAL: FERRAMENTAS E PALETA PICO-8
+   ============================================================================ */
+.aop-dock {
+  flex: 0 0 auto;
+  max-height: 42dvh;
+  background-color: var(--bg-panel);
+  border-top: 2px solid var(--border-subtle);
+  padding: 5px 8px 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+  z-index: 15;
+}
+
+/* Grade de Ferramentas Táteis (8 botões alinhados com as 8 colunas da paleta) */
+.aop-tools-row {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.aop-tool-btn {
+  appearance: none;
+  min-height: 38px;
+  padding: 2px 1px;
+  background-color: var(--bg-button);
+  border: 2px solid var(--border-subtle);
+  color: var(--text-secondary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  cursor: pointer;
+  touch-action: manipulation;
+  box-shadow: 0 2px 0 #000000;
+}
+
+.aop-tool-btn:hover:not(:disabled) {
+  background-color: var(--bg-button-hover);
+  color: var(--text-primary);
+}
+
+.aop-tool-btn[aria-pressed="true"] {
+  background-color: #1d2b53;
+  border-color: var(--accent-amber);
+  color: var(--accent-yellow);
+  box-shadow: 0 0 0 1px #000000;
+}
+
+.aop-tool-btn:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.aop-tool-icon {
+  width: 15px;
+  height: 15px;
+  fill: currentColor;
+  pointer-events: none;
+}
+
+.aop-tool-label {
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* Paleta Oficial PICO-8 (16 cores: 0 a F) */
+.aop-palette-container {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.aop-palette-grid {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.aop-swatch-btn {
+  appearance: none;
+  height: 30px;
+  min-height: 30px;
+  border: 2px solid #000000;
+  outline: 1px solid var(--border-subtle);
+  position: relative;
+  cursor: pointer;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  padding: 2px 3px;
+  touch-action: manipulation;
+  transition: transform 80ms ease;
+}
+
+.aop-swatch-btn[aria-pressed="true"] {
+  border-color: #ffffff;
+  outline: 2px solid var(--accent-yellow);
+  transform: scale(1.05);
+  z-index: 2;
+}
+
+.aop-swatch-index {
+  font-size: 8.5px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 1px 2px;
+  background-color: rgba(0, 0, 0, 0.68);
+  color: #fff1e8;
+  pointer-events: none;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ============================================================================
+   ADAPTAÇÃO PARA ORIENTAÇÃO HORIZONTAL (PAISAGEM / TELAS LARGAS)
+   ============================================================================ */
+.aop-shell[data-orientation="landscape"] .aop-main {
+  flex-direction: row;
+}
+
+.aop-shell[data-orientation="landscape"] .aop-stage-section {
+  flex: 1 1 auto;
+  height: 100%;
+}
+
+.aop-shell[data-orientation="landscape"] .aop-dock {
+  flex: 0 0 276px;
+  max-height: 100%;
+  height: 100%;
+  border-top: none;
+  border-left: 2px solid var(--border-subtle);
+  justify-content: flex-start;
+  gap: 6px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+  padding: 6px 8px;
+}
+
+.aop-shell[data-orientation="landscape"] .aop-tools-row {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.aop-shell[data-orientation="landscape"] .aop-tool-btn {
+  min-height: 36px;
+  padding: 3px 2px;
+}
+
+.aop-shell[data-orientation="landscape"] .aop-palette-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.aop-shell[data-orientation="landscape"] .aop-swatch-btn {
+  height: 26px;
+  min-height: 26px;
+}
+
+/* ============================================================================
+   MODO DE TELA CHEIA (NATIVO E FALLBACK EXPANDIDO)
+   ============================================================================ */
+.aop-shell:fullscreen,
+.aop-shell:-webkit-full-screen,
+.aop-shell[data-fullscreen="true"],
+.aop-shell[data-fullscreen="fallback"] {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  z-index: 9999;
+  background-color: var(--bg-deep);
+}
+
+/* ============================================================================
+   MODAIS E GAVETAS (NOVO PROJETO / TAMANHO DA GRADE E PROJETOS / EXPORTAÇÕES)
+   ============================================================================ */
+.aop-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.78);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  z-index: 100;
+}
+
+.aop-modal-backdrop[hidden] {
+  display: none !important;
+}
+
+.aop-modal {
+  width: 100%;
+  max-width: 460px;
+  max-height: 92dvh;
+  background-color: var(--bg-panel);
+  border: 2px solid var(--accent-cyan);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.85);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.aop-modal-header {
+  padding: 8px 12px;
+  background-color: var(--bg-elevated);
+  border-bottom: 2px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.aop-modal-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent-yellow);
+  letter-spacing: 0.4px;
+}
+
+.aop-modal-close {
+  appearance: none;
+  min-width: 32px;
+  min-height: 32px;
+  background-color: var(--bg-button);
+  border: 1px solid var(--border-strong);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.aop-modal-body {
+  padding: 12px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.aop-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.aop-field-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.aop-text-input,
+.aop-number-input {
+  width: 100%;
+  min-height: 36px;
+  padding: 5px 8px;
+  background-color: var(--bg-deep);
+  border: 2px solid var(--border-strong);
+  color: var(--text-primary);
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+.aop-text-input:focus,
+.aop-number-input:focus {
+  outline: none;
+  border-color: var(--accent-amber);
+}
+
+.aop-preset-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.aop-preset-btn {
+  appearance: none;
+  min-height: 38px;
+  background-color: var(--bg-button);
+  border: 2px solid var(--border-strong);
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.aop-preset-btn[data-selected="true"] {
+  background-color: #1d2b53;
+  border-color: var(--accent-amber);
+  color: var(--accent-yellow);
+}
+
+.aop-dimensions-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.aop-modal-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 6px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.aop-action-btn {
+  appearance: none;
+  min-height: 36px;
+  padding: 6px 10px;
+  background-color: var(--bg-button);
+  border: 2px solid var(--border-strong);
+  color: var(--text-primary);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: center;
+}
+
+.aop-action-btn:hover {
+  border-color: var(--accent-cyan);
+}
+
+.aop-action-btn-confirm {
+  background-color: #008751;
+  border-color: var(--accent-green);
+  color: var(--text-primary);
+}
+
+.aop-action-btn-accent {
+  background-color: #1d2b53;
+  border-color: var(--accent-cyan);
+  color: var(--accent-yellow);
+}
+
+.aop-action-btn-danger {
+  background-color: #7e2553;
+  border-color: var(--accent-red);
+}
+
+/* Lista de Projetos Salvos no Dispositivo */
+.aop-saved-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 150px;
+  overflow-y: auto;
+  border: 1px solid var(--border-subtle);
+  background-color: var(--bg-deep);
+  padding: 6px;
+}
+
+.aop-saved-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 8px;
+  background-color: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+}
+
+.aop-saved-info {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.aop-saved-name {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.aop-saved-meta {
+  font-size: 9.5px;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.aop-saved-buttons {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.aop-file-ops-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+/* Aviso Toast Não-Intrusivo */
+.aop-toast {
+  position: fixed;
+  top: 108px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #1d2b53;
+  border: 2px solid var(--accent-yellow);
+  color: var(--text-primary);
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  z-index: 150;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.7);
+  pointer-events: none;
+  max-width: 92vw;
+  text-align: center;
+}
+
+.aop-toast[hidden] {
+  display: none !important;
+}
+
+@media (max-width: 480px) {
+  .aop-project-label,
+  .aop-project-sep {
+    display: none;
+  }
+  .aop-header {
+    padding: 3px 6px;
+    gap: 4px;
+  }
+  .aop-brand-title {
+    font-size: 13px;
+  }
+  .aop-top-btn {
+    min-height: 28px;
+    padding: 2px 6px;
+    font-size: 9.5px;
+  }
+}
+
+@media (max-width: 390px) {
+  .aop-logo-mark,
+  .aop-brand-sep {
+    display: none;
+  }
+  .aop-brand-title {
+    font-size: 12.5px;
+  }
+  .aop-top-btn {
+    padding: 2px 5px;
+    font-size: 9px;
+  }
+  .aop-color-hex-tag,
+  .aop-hex-sep {
+    display: none;
+  }
+  .aop-timeline-bar {
+    padding: 2px 4px;
+    gap: 4px;
+  }
+  .aop-fps-badge {
+    min-width: 32px;
+    font-size: 9px;
+  }
+}
+
+/* Telas de menor altura em retrato (ex.: Android compacto 360x520, 320x480) */
+@media (max-height: 620px) {
+  .aop-header {
+    min-height: 32px;
+    padding: 2px 6px;
+  }
+  .aop-top-btn {
+    min-height: 26px;
+    padding: 2px 5px;
+    font-size: 9px;
+  }
+  .aop-stage-bar {
+    min-height: 26px;
+    padding: 2px 6px;
+  }
+  .aop-mini-btn {
+    min-height: 22px;
+    min-width: 22px;
+    padding: 1px 4px;
+    font-size: 9px;
+  }
+  .aop-canvas-viewport {
+    padding: 2px;
+  }
+  .aop-timeline-bar {
+    padding: 2px 4px;
+    gap: 3px;
+  }
+  .aop-frame-item {
+    min-width: 32px;
+    height: 26px;
+    padding: 1px 2px;
+  }
+  .aop-frame-thumb {
+    width: 18px;
+    height: 18px;
+  }
+  .aop-dock {
+    padding: 3px 6px 4px;
+    gap: 3px;
+    max-height: 40dvh;
+  }
+  .aop-tool-btn {
+    min-height: 32px;
+    padding: 1px;
+    gap: 1px;
+  }
+  .aop-tool-icon {
+    width: 13px;
+    height: 13px;
+  }
+  .aop-tool-label {
+    font-size: 7px;
+  }
+  .aop-swatch-btn {
+    height: 24px;
+    min-height: 24px;
+  }
+}
+
+/* Paisagem em telas pequenas (ex.: 560x320, 640x360) */
+@media (max-height: 420px) and (min-width: 480px) {
+  .aop-shell[data-orientation="landscape"] .aop-dock {
+    flex: 0 0 244px;
+    padding: 4px 6px;
+    gap: 4px;
+  }
+  .aop-shell[data-orientation="landscape"] .aop-tool-btn {
+    min-height: 28px;
+  }
+  .aop-shell[data-orientation="landscape"] .aop-swatch-btn {
+    height: 22px;
+    min-height: 22px;
+  }
+}
+    </style>
+  </head>
+  <body>
+    <div id="aop-shell" class="aop-shell" data-orientation="portrait" data-tool="pencil" data-grid="on" data-fullscreen="false" data-playing="false">
+      <!-- BARRA SUPERIOR: Identidade, Indicador da Grade, Ações de Projeto e Tela Cheia -->
+      <header class="aop-header" aria-label="Cabeçalho do editor AOprite">
+        <div class="aop-brand-cluster">
+          <span class="aop-logo-mark" aria-hidden="true"></span>
+          <h1 class="aop-brand-title">AOprite</h1>
+          <div class="aop-status-strip" aria-live="polite">
+            <span class="aop-status-sep aop-brand-sep" aria-hidden="true">·</span>
+            <span id="aop-grid-size-badge" class="aop-grid-indicator" data-testid="grid-size-indicator">16×16</span>
+            <span class="aop-status-sep aop-project-sep" aria-hidden="true">·</span>
+            <span id="aop-project-name-display" class="aop-project-label">Novo Sprite</span>
+          </div>
+        </div>
+
+        <nav class="aop-header-actions" aria-label="Ações de projeto e visualização">
+          <button type="button" id="btn-open-new-modal" class="aop-top-btn" aria-label="Novo projeto ou alterar tamanho da grade">
+            GRADE
+          </button>
+          <button type="button" id="btn-quick-save" class="aop-top-btn aop-top-btn-primary" aria-label="Salvar projeto no dispositivo">
+            SALVAR
+          </button>
+          <button type="button" id="btn-open-projects-modal" class="aop-top-btn aop-top-btn-accent" aria-label="Projetos, exportar PNG, GIF, JSON, JS ou arquivo .aop">
+            .AOP
+          </button>
+          <button type="button" id="btn-pwa-install" class="aop-top-btn" data-testid="btn-pwa-install" aria-label="Instalar aplicativo AOprite ou ver instruções offline">
+            APP
+          </button>
+          <button type="button" id="btn-fullscreen" class="aop-top-btn aop-top-btn-fullscreen" data-testid="btn-fullscreen" aria-pressed="false" aria-label="Entrar ou sair do modo de tela cheia">
+            <svg class="aop-btn-icon" viewBox="0 0 16 16" aria-hidden="true">
+              <path id="aop-fullscreen-icon-path" d="M2 2h5v2H4v3H2V2zm7 0h5v5h-2V4H9V2zM4 9v3h3v2H2V9h2zm10 0v5H9v-2h3V9h2z" />
+            </svg>
+            <span id="aop-fullscreen-label">TELA</span>
+          </button>
+        </nav>
+      </header>
+
+      <!-- ÁREA PRINCIPAL DO EDITOR -->
+      <main class="aop-main" aria-label="Área principal de edição AOprite">
+        <!-- PALCO CENTRAL DE DESENHO + TIMELINE COMPACTA -->
+        <section class="aop-stage-section" aria-label="Área de desenho do sprite">
+          <div class="aop-stage-bar">
+            <!-- Indicador Claro da Cor Selecionada -->
+            <div class="aop-active-color-readout" aria-label="Cor selecionada atualmente">
+              <div id="aop-active-color-swatch" class="aop-color-preview-box" style="background-color: #FF004D;" data-testid="active-color-swatch"></div>
+              <div class="aop-color-meta">
+                <span id="aop-active-color-index" class="aop-color-index-tag" data-testid="active-color-index">COR 7</span>
+                <span class="aop-status-sep aop-hex-sep" aria-hidden="true">·</span>
+                <span id="aop-active-color-hex" class="aop-color-hex-tag" data-testid="active-color-hex">#FF004D</span>
+              </div>
+              <span class="aop-status-sep" aria-hidden="true">·</span>
+              <span id="aop-cursor-coords" class="aop-coord-readout">X:- Y:-</span>
+            </div>
+
+            <!-- Controles de Zoom e Visualização da Grade -->
+            <div class="aop-zoom-controls" role="group" aria-label="Controles de zoom e grade">
+              <button type="button" id="btn-toggle-grid" class="aop-mini-btn" aria-pressed="true" aria-label="Alternar linhas da grade">
+                GRADE
+              </button>
+              <button type="button" id="btn-zoom-out" class="aop-mini-btn" aria-label="Diminuir zoom">
+                -
+              </button>
+              <button type="button" id="btn-zoom-fit" class="aop-mini-btn" aria-label="Ajustar zoom à tela">
+                <span id="aop-zoom-display" class="aop-zoom-label">FIT</span>
+              </button>
+              <button type="button" id="btn-zoom-in" class="aop-mini-btn" aria-label="Aumentar zoom">
+                +
+              </button>
+            </div>
+          </div>
+
+          <!-- Barra Contextual da Seleção Livre (LAÇO) -->
+          <div id="aop-lasso-bar" class="aop-lasso-bar" hidden aria-label="Ações da seleção livre Laço">
+            <span id="aop-lasso-status" class="aop-lasso-status">LAÇO: Contorne a área</span>
+            <div class="aop-lasso-actions" role="group" aria-label="Operações de recorte, cópia e colagem da seleção">
+              <button type="button" id="btn-lasso-copy" class="aop-mini-btn" disabled aria-label="Copiar seleção">
+                COPIAR
+              </button>
+              <button type="button" id="btn-lasso-cut" class="aop-mini-btn" disabled aria-label="Cortar seleção">
+                CORTAR
+              </button>
+              <button type="button" id="btn-lasso-paste" class="aop-mini-btn" disabled aria-label="Colar seleção">
+                COLAR
+              </button>
+              <button type="button" id="btn-lasso-cancel" class="aop-mini-btn aop-action-btn-danger" disabled aria-label="Cancelar seleção">
+                ✕
+              </button>
+            </div>
+          </div>
+
+          <!-- Palco do Canvas Pixel-Perfect -->
+          <div id="aop-canvas-viewport" class="aop-canvas-viewport">
+            <div id="aop-canvas-frame" class="aop-canvas-frame">
+              <canvas id="aop-canvas" width="256" height="256" data-testid="aop-canvas" aria-label="Grade de desenho pixel a pixel"></canvas>
+            </div>
+          </div>
+
+          <!-- ETAPA 2: TIMELINE COMPACTA DE ANIMAÇÕES -->
+          <div id="aop-timeline-bar" class="aop-timeline-bar" aria-label="Linha do tempo de animação">
+            <div class="aop-timeline-controls">
+              <div class="aop-timeline-transport" role="group" aria-label="Reprodução e velocidade da animação">
+                <button type="button" id="btn-anim-play" class="aop-mini-btn" aria-pressed="false" aria-label="Reproduzir ou pausar animação">
+                  ▶
+                </button>
+                <button type="button" id="btn-fps-down" class="aop-mini-btn" aria-label="Diminuir FPS">
+                  -
+                </button>
+                <span id="aop-fps-display" class="aop-fps-badge" data-testid="fps-display">8 FPS</span>
+                <button type="button" id="btn-fps-up" class="aop-mini-btn" aria-label="Aumentar FPS">
+                  +
+                </button>
+                <button type="button" id="btn-anim-loop" class="aop-mini-btn" aria-pressed="true" aria-label="Alternar repetição em loop">
+                  LOOP
+                </button>
+              </div>
+
+              <div class="aop-timeline-ops" role="group" aria-label="Gerenciar quadros">
+                <button type="button" id="btn-frame-add" class="aop-mini-btn" aria-label="Adicionar novo quadro">
+                  +Q
+                </button>
+                <button type="button" id="btn-frame-dup" class="aop-mini-btn" aria-label="Duplicar quadro atual">
+                  DUP
+                </button>
+                <button type="button" id="btn-frame-left" class="aop-mini-btn" aria-label="Mover quadro para a esquerda">
+                  &lt;
+                </button>
+                <button type="button" id="btn-frame-right" class="aop-mini-btn" aria-label="Mover quadro para a direita">
+                  &gt;
+                </button>
+                <button type="button" id="btn-frame-del" class="aop-mini-btn aop-action-btn-danger" aria-label="Remover quadro atual">
+                  DEL
+                </button>
+              </div>
+            </div>
+
+            <div id="aop-frames-strip" class="aop-frames-strip" role="listbox" aria-label="Quadros da animação"></div>
+          </div>
+        </section>
+
+        <!-- DOCK DE FERRAMENTAS E PALETA PICO-8 -->
+        <aside class="aop-dock" aria-label="Ferramentas de desenho e paleta de cores">
+          <!-- Ferramentas de Desenho + Laço + Desfazer/Refazer + Limpar -->
+          <div class="aop-tools-row" role="toolbar" aria-label="Ferramentas de edição">
+            <button type="button" id="tool-pencil" class="aop-tool-btn" data-tool-id="pencil" aria-pressed="true" aria-label="Ferramenta Lápis">
+              <svg class="aop-tool-icon" viewBox="0 0 16 16" aria-hidden="true">
+                <path d="M11.5 1.5l3 3-9 9H2.5v-3l9-9zm1.4 0l1.6 1.6-1.1 1.1-1.6-1.6 1.1-1.1z" />
+              </svg>
+              <span class="aop-tool-label">LÁPIS</span>
+            </button>
+
+            <button type="button" id="tool-eraser" class="aop-tool-btn" data-tool-id="eraser" aria-pressed="false" aria-label="Ferramenta Borracha">
+              <svg class="aop-tool-icon" viewBox="0 0 16 16" aria-hidden="true">
+                <path d="M8.5 2.5l5 5-6 6H3.5l-2-2 7-9zm-4.3 9h2.6l2.7-2.7-3.6-3.6-3.1 3.9 1.4 2.4z" />
+              </svg>
+              <span class="aop-tool-label">APAGAR</span>
+            </button>
+
+            <button type="button" id="tool-fill" class="aop-tool-btn" data-tool-id="fill" aria-pressed="false" aria-label="Ferramenta Preenchimento">
+              <svg class="aop-tool-icon" viewBox="0 0 16 16" aria-hidden="true">
+                <path d="M7.5 2L13 7.5 6.5 14 1 8.5 7.5 2zm5.5 7.5c1.1 1.5 2 2.6 2 3.5a2 2 0 1 1-4 0c0-.9.9-2 2-3.5z" />
+              </svg>
+              <span class="aop-tool-label">BALDE</span>
+            </button>
+
+            <button type="button" id="tool-eyedropper" class="aop-tool-btn" data-tool-id="eyedropper" aria-pressed="false" aria-label="Ferramenta Conta-gotas">
+              <svg class="aop-tool-icon" viewBox="0 0 16 16" aria-hidden="true">
+                <path d="M11.2 1.8a2 2 0 0 1 2.8 2.8l-2.3 2.3.8.8-1.4 1.4-.8-.8-5.2 5.2H2.5v-2.6l5.2-5.2-.8-.8 1.4-1.4.8.8 2.1-2.5z" />
+              </svg>
+              <span class="aop-tool-label">GOTAS</span>
+            </button>
+
+            <button type="button" id="tool-lasso" class="aop-tool-btn" data-tool-id="lasso" aria-pressed="false" aria-label="Ferramenta Seleção Livre Laço">
+              <svg class="aop-tool-icon" viewBox="0 0 16 16" aria-hidden="true">
+                <path d="M8 2C4.7 2 2 4.2 2 7s2.7 5 6 5c.9 0 1.8-.2 2.5-.5l1.8 2.2 1.5-1.2-1.7-2.1C13.3 9.5 14 8.3 14 7c0-2.8-2.7-5-6-5zm0 2c2.2 0 4 1.3 4 3s-1.8 3-4 3-4-1.3-4-3 1.8-3 4-3z" />
+              </svg>
+              <span class="aop-tool-label">LAÇO</span>
+            </button>
+
+            <button type="button" id="btn-undo" class="aop-tool-btn" aria-label="Desfazer ação" disabled>
+              <svg class="aop-tool-icon" viewBox="0 0 16 16" aria-hidden="true">
+                <path d="M6 3L1 8l5 5v-3h4c2.2 0 4 1.8 4 4v1h1v-1c0-3.3-2.7-6-6-6H6V3z" />
+              </svg>
+              <span class="aop-tool-label">DESFAZ</span>
+            </button>
+
+            <button type="button" id="btn-redo" class="aop-tool-btn" aria-label="Refazer ação" disabled>
+              <svg class="aop-tool-icon" viewBox="0 0 16 16" aria-hidden="true">
+                <path d="M10 3l5 5-5 5v-3H6c-2.2 0-4 1.8-4 4v1H1v-1c0-3.3 2.7-6 6-6h3V3z" />
+              </svg>
+              <span class="aop-tool-label">REFAZ</span>
+            </button>
+
+            <button type="button" id="btn-clear-canvas" class="aop-tool-btn" aria-label="Limpar grade do quadro atual">
+              <svg class="aop-tool-icon" viewBox="0 0 16 16" aria-hidden="true">
+                <path d="M5 2h6v1h3v2H2V3h3V2zm-2 4h10l-1 8H4L3 6z" />
+              </svg>
+              <span class="aop-tool-label">LIMPAR</span>
+            </button>
+          </div>
+
+          <!-- Paleta Oficial de 16 Cores PICO-8 -->
+          <div class="aop-palette-container">
+            <div id="aop-palette-grid" class="aop-palette-grid" role="radiogroup" aria-label="Paleta oficial de 16 cores PICO-8"></div>
+          </div>
+        </aside>
+      </main>
+
+      <!-- MODAL 1: NOVO PROJETO / CONFIGURAR TAMANHO DA GRADE -->
+      <div id="modal-new-project" class="aop-modal-backdrop" hidden role="dialog" aria-modal="true" aria-labelledby="modal-new-title">
+        <div class="aop-modal">
+          <div class="aop-modal-header">
+            <h2 id="modal-new-title" class="aop-modal-title">GRADE E NOVO SPRITE</h2>
+            <button type="button" id="btn-close-new-modal" class="aop-modal-close" aria-label="Fechar janela de grade">✕</button>
+          </div>
+          <div class="aop-modal-body">
+            <div class="aop-field-group">
+              <label for="input-new-project-name" class="aop-field-label">NOME DO SPRITE</label>
+              <input type="text" id="input-new-project-name" class="aop-text-input" value="Novo Sprite" maxlength="40" />
+            </div>
+
+            <div class="aop-field-group">
+              <span class="aop-field-label">TAMANHOS PREDEFINIDOS</span>
+              <div class="aop-preset-row">
+                <button type="button" class="aop-preset-btn" data-preset-w="8" data-preset-h="8" data-selected="false" aria-label="Predefinição 8 por 8">
+                  8 × 8
+                </button>
+                <button type="button" class="aop-preset-btn" data-preset-w="16" data-preset-h="16" data-selected="true" aria-label="Predefinição 16 por 16">
+                  16 × 16
+                </button>
+                <button type="button" class="aop-preset-btn" data-preset-w="32" data-preset-h="32" data-selected="false" aria-label="Predefinição 32 por 32">
+                  32 × 32
+                </button>
+              </div>
+            </div>
+
+            <div class="aop-dimensions-grid">
+              <div class="aop-field-group">
+                <label for="input-grid-width" class="aop-field-label">LARGURA (1–64 px)</label>
+                <input type="number" id="input-grid-width" class="aop-number-input" min="1" max="64" value="16" />
+              </div>
+              <div class="aop-field-group">
+                <label for="input-grid-height" class="aop-field-label">ALTURA (1–64 px)</label>
+                <input type="number" id="input-grid-height" class="aop-number-input" min="1" max="64" value="16" />
+              </div>
+            </div>
+
+            <div class="aop-modal-actions">
+              <button type="button" id="btn-resize-keep" class="aop-action-btn" aria-label="Redimensionar mantendo os pixels atuais">
+                REDIMENSIONAR
+              </button>
+              <button type="button" id="btn-create-blank" class="aop-action-btn aop-action-btn-confirm" aria-label="Criar novo projeto em branco">
+                CRIAR NOVO
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MODAL 2: PROJETOS SALVOS, ARQUIVO .AOP E EXPORTAÇÕES (PNG, GIF, JSON, JS) -->
+      <div id="modal-projects" class="aop-modal-backdrop" hidden role="dialog" aria-modal="true" aria-labelledby="modal-projects-title">
+        <div class="aop-modal">
+          <div class="aop-modal-header">
+            <h2 id="modal-projects-title" class="aop-modal-title">PROJETOS, .AOP E EXPORTAÇÕES</h2>
+            <button type="button" id="btn-close-projects-modal" class="aop-modal-close" aria-label="Fechar janela de projetos">✕</button>
+          </div>
+          <div class="aop-modal-body">
+            <!-- Salvar Projeto Atual -->
+            <div class="aop-field-group">
+              <label for="input-save-project-name" class="aop-field-label">NOME DO PROJETO ATUAL</label>
+              <div style="display: flex; gap: 6px;">
+                <input type="text" id="input-save-project-name" class="aop-text-input" value="Novo Sprite" maxlength="40" />
+                <button type="button" id="btn-save-in-modal" class="aop-action-btn aop-action-btn-confirm" style="white-space: nowrap;" aria-label="Salvar projeto na memória local">
+                  SALVAR LOCAL
+                </button>
+              </div>
+            </div>
+
+            <!-- Exportar / Importar .aop (v1.0 e v2.0) -->
+            <div class="aop-field-group">
+              <span class="aop-field-label">ARQUIVO DE PROJETO NATIVO (.AOP)</span>
+              <div class="aop-file-ops-grid">
+                <button type="button" id="btn-export-aop" class="aop-action-btn" aria-label="Exportar arquivo .aop">
+                  EXPORTAR .AOP
+                </button>
+                <button type="button" id="btn-trigger-import-aop" class="aop-action-btn" aria-label="Importar arquivo .aop">
+                  IMPORTAR .AOP
+                </button>
+              </div>
+              <input type="file" id="input-import-aop-file" accept=".aop,application/json" hidden />
+            </div>
+
+            <!-- Etapa 2: Exportação de Imagem e Animação (PNG, GIF) e Dados/Código (JSON, JS Neon-AO) -->
+            <div class="aop-field-group">
+              <span class="aop-field-label">EXPORTAÇÕES E DADOS (PNG, GIF, JSON, JS NEON-AO)</span>
+              <div class="aop-file-ops-grid">
+                <button type="button" id="btn-export-png" class="aop-action-btn aop-action-btn-accent" aria-label="Exportar quadro atual em PNG estático">
+                  EXPORTAR PNG
+                </button>
+                <button type="button" id="btn-export-gif" class="aop-action-btn aop-action-btn-accent" aria-label="Exportar animação completa em GIF animado">
+                  EXPORTAR GIF
+                </button>
+                <button type="button" id="btn-export-json" class="aop-action-btn" aria-label="Exportar dados estruturados em JSON">
+                  EXPORTAR JSON
+                </button>
+                <button type="button" id="btn-trigger-import-json" class="aop-action-btn" aria-label="Importar dados estruturados em JSON">
+                  IMPORTAR JSON
+                </button>
+              </div>
+              <button type="button" id="btn-export-js" class="aop-action-btn aop-action-btn-confirm" style="width: 100%; margin-top: 4px;" aria-label="Exportar código JavaScript para Neon-AO 1.0">
+                EXPORTAR JS (NEON-AO 1.0)
+              </button>
+              <input type="file" id="input-import-json-file" accept=".json,application/json" hidden />
+            </div>
+
+            <!-- Lista de Projetos Salvos no Dispositivo -->
+            <div class="aop-field-group">
+              <span class="aop-field-label">PROJETOS SALVOS NO DISPOSITIVO</span>
+              <div id="aop-saved-projects-list" class="aop-saved-list" data-testid="saved-projects-list"></div>
+            </div>
+
+            <!-- Etapa 3: Atalho para Instalação PWA e Créditos Forge Tosco -->
+            <div class="aop-field-group" style="border-top: 1px solid var(--border-subtle); padding-top: 6px;">
+              <button type="button" id="btn-open-pwa-from-projects" class="aop-action-btn" style="width: 100%;" aria-label="Instalar aplicativo PWA na tela inicial do Android e ver modo offline">
+                INSTALAR APLICATIVO (PWA) / MODO OFFLINE
+              </button>
+              <div style="font-size: 9.5px; color: var(--text-muted); text-align: center; margin-top: 4px;">
+                AOprite · Forge Tosco © 2026 · Licença MIT · 100% Offline
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MODAL 3: INSTALAÇÃO PWA ANDROID, FUNCIONAMENTO OFFLINE E CRÉDITOS (ETAPA 3) -->
+      <div id="modal-pwa-install" class="aop-modal-backdrop" hidden role="dialog" aria-modal="true" aria-labelledby="modal-pwa-title">
+        <div class="aop-modal">
+          <div class="aop-modal-header">
+            <h2 id="modal-pwa-title" class="aop-modal-title">APLICATIVO ANDROID (PWA) E OFFLINE</h2>
+            <button type="button" id="btn-close-pwa-modal" class="aop-modal-close" aria-label="Fechar janela de instalação PWA">✕</button>
+          </div>
+          <div class="aop-modal-body">
+            <div class="aop-field-group">
+              <span class="aop-field-label">ESTADO ATUAL DE EXECUÇÃO E CACHE OFFLINE</span>
+              <div style="background-color: var(--bg-deep); border: 1px solid var(--border-subtle); padding: 8px; font-size: 10.5px; line-height: 1.5; color: var(--text-secondary);">
+                <div>Modo: <strong id="aop-pwa-mode-status" style="color: var(--accent-yellow);">Verificando...</strong></div>
+                <div>Cache Offline: <strong id="aop-pwa-sw-status" style="color: var(--accent-green);">Verificando...</strong></div>
+                <div>Conectividade: <strong id="aop-pwa-net-status" style="color: var(--accent-cyan);">Online</strong></div>
+              </div>
+            </div>
+
+            <div class="aop-field-group" id="aop-pwa-prompt-group">
+              <button type="button" id="btn-trigger-pwa-prompt" class="aop-action-btn aop-action-btn-confirm" style="width: 100%;" aria-label="Instalar AOprite na tela inicial agora">
+                INSTALAR NA TELA INICIAL DO ANDROID
+              </button>
+            </div>
+
+            <div class="aop-field-group">
+              <span class="aop-field-label">COMO INSTALAR NO ANDROID (CHROME / NAVEGADOR)</span>
+              <div style="background-color: var(--bg-deep); border: 1px solid var(--border-subtle); padding: 8px; font-size: 10.5px; line-height: 1.55; color: var(--text-primary);">
+                <p>1. Na versão hospedada via HTTPS (ex.: GitHub Pages), toque em <strong>INSTALAR NA TELA INICIAL</strong> acima ou abra o menu <strong>⋮</strong> do navegador no Android.</p>
+                <p style="margin-top: 4px;">2. Selecione <strong>"Instalar aplicativo"</strong> ou <strong>"Adicionar à tela inicial"</strong>.</p>
+                <p style="margin-top: 4px;">3. Após instalado, o AOprite abre em tela dedicada e funciona <strong>100% offline</strong> sem internet.</p>
+                <p style="margin-top: 4px; color: var(--text-secondary);">• Uso como arquivo local: você também pode abrir <strong>index.html</strong> / <strong>AOprite.html</strong> diretamente do armazenamento do celular.</p>
+              </div>
+            </div>
+
+            <div style="font-size: 9.5px; color: var(--text-muted); text-align: center; border-top: 1px solid var(--border-subtle); padding-top: 6px;">
+              AOprite · Estúdio e Direitos Autorais: <strong>Forge Tosco</strong> (2026) · Licença MIT
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Toast de Feedback -->
+      <div id="aop-toast" class="aop-toast" hidden role="status" aria-live="polite"></div>
+    </div>
+
+    <script>
+/**
+ * ============================================================================
+ * AOprite — Etapas 1 e 2: Núcleo, Ferramentas, Animações, Seleção Livre e Exportações
+ * Arquitetura modular interna autocontida (HTML + CSS + JS puros) mantendo os 7 subsistemas:
+ *  1. AOprite.Palette          — Paleta oficial de 16 cores PICO-8 (0..F) e transparência (.)
+ *  2. AOprite.Model            — Estado do Sprite, múltiplos quadros, FPS, loop e matrizes createSprite()
+ *  3. AOprite.History          — Pilha de Desfazer (Undo) e Refazer (Redo) isolada por quadro
+ *  4. AOprite.Tools            — Lápis (Bresenham), Borracha, Balde (Flood Fill), Conta-gotas e Laço livre
+ *  5. AOprite.Storage          — Formato ".aop" (v1.0/v2.0), localStorage e exportações PNG, GIF89a, JSON e JS
+ *  6. AOprite.Renderer         — Renderizador Canvas Pixel-Perfect, miniaturas da timeline e máscara do Laço
+ *  7. AOprite.EditorController — Controlador de interface, timeline, seleção livre, tela cheia e modais
+ * ============================================================================
+ */
+(function (root) {
+  'use strict';
+
+  var AOprite = root.AOprite || (root.AOprite = {});
+
+  /* ==========================================================================
+     1. MÓDULO DE PALETA OFICIAL (PICO-8 / NEON-AO)
+     ========================================================================== */
+  var PALETTE_ENTRIES = Object.freeze([
+    { index: 0,  char: '0', hex: '#000000', rgb: [0, 0, 0],       name: 'Preto' },
+    { index: 1,  char: '1', hex: '#1D2B53', rgb: [29, 43, 83],    name: 'Azul Escuro' },
+    { index: 2,  char: '2', hex: '#7E2553', rgb: [126, 37, 83],   name: 'Roxo Escuro' },
+    { index: 3,  char: '3', hex: '#5F574F', rgb: [95, 87, 79],    name: 'Cinza Escuro' },
+    { index: 4,  char: '4', hex: '#C2C3C7', rgb: [194, 195, 199], name: 'Cinza Claro' },
+    { index: 5,  char: '5', hex: '#FFF1E8', rgb: [255, 241, 232], name: 'Branco Quente' },
+    { index: 6,  char: '6', hex: '#AB5236', rgb: [171, 82, 54],   name: 'Marrom' },
+    { index: 7,  char: '7', hex: '#FF004D', rgb: [255, 0, 77],    name: 'Vermelho' },
+    { index: 8,  char: '8', hex: '#FFA300', rgb: [255, 163, 0],   name: 'Laranja' },
+    { index: 9,  char: '9', hex: '#FFEC27', rgb: [255, 236, 39],  name: 'Amarelo' },
+    { index: 10, char: 'A', hex: '#FF77A8', rgb: [255, 119, 168], name: 'Rosa' },
+    { index: 11, char: 'B', hex: '#FFCCAA', rgb: [255, 204, 170], name: 'Pêssego' },
+    { index: 12, char: 'C', hex: '#008751', rgb: [0, 135, 81],    name: 'Verde Escuro' },
+    { index: 13, char: 'D', hex: '#00E436', rgb: [0, 228, 54],    name: 'Verde Claro' },
+    { index: 14, char: 'E', hex: '#29ADFF', rgb: [41, 173, 255],  name: 'Azul Claro' },
+    { index: 15, char: 'F', hex: '#83769C', rgb: [131, 118, 156], name: 'Lavanda' }
+  ]);
+
+  var CHAR_MAP = {
+    '0': 0, '1': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7,
+    '8': 8, '9': 9, 'A': 10, 'a': 10, 'B': 11, 'b': 11, 'C': 12, 'c': 12,
+    'D': 13, 'd': 13, 'E': 14, 'e': 14, 'F': 15, 'f': 15,
+    '.': -1, ' ': -1, '-': -1
+  };
+
+  var Palette = Object.freeze({
+    ENTRIES: PALETTE_ENTRIES,
+    TRANSPARENT: -1,
+    TRANSPARENT_SYMBOL: '.',
+
+    getEntry: function (index) {
+      var n = Number(index);
+      if (!Number.isInteger(n) || n < 0 || n > 15) return null;
+      return PALETTE_ENTRIES[n];
+    },
+
+    getHex: function (index) {
+      var entry = Palette.getEntry(index);
+      return entry ? entry.hex : null;
+    },
+
+    indexToChar: function (index) {
+      var entry = Palette.getEntry(index);
+      return entry ? entry.char : '.';
+    },
+
+    charToIndex: function (ch) {
+      if (!ch || typeof ch !== 'string') return -1;
+      var mapped = CHAR_MAP[ch.charAt(0)];
+      return typeof mapped === 'number' ? mapped : -1;
+    }
+  });
+
+  AOprite.Palette = Palette;
+
+  /* ==========================================================================
+     2. MÓDULO DE MODELO DE SPRITE, MÚLTIPLOS QUADROS E ANIMAÇÃO
+     ========================================================================== */
+  var MIN_DIM = 1;
+  var MAX_DIM = 64;
+  var MIN_FPS = 1;
+  var MAX_FPS = 24;
+
+  function clampDimension(val, fallback) {
+    var n = Math.floor(Number(val));
+    if (!Number.isFinite(n)) return fallback || 16;
+    if (n < MIN_DIM) return MIN_DIM;
+    if (n > MAX_DIM) return MAX_DIM;
+    return n;
+  }
+
+  function clampFPS(val, fallback) {
+    var n = Math.floor(Number(val));
+    if (!Number.isFinite(n)) return fallback || 8;
+    if (n < MIN_FPS) return MIN_FPS;
+    if (n > MAX_FPS) return MAX_FPS;
+    return n;
+  }
+
+  function createEmptyPixels(width, height) {
+    var total = width * height;
+    var arr = new Array(total);
+    for (var i = 0; i < total; i++) {
+      arr[i] = -1;
+    }
+    return arr;
+  }
+
+  function normalizePixels(pixels, width, height) {
+    var total = width * height;
+    var out = createEmptyPixels(width, height);
+    if (!Array.isArray(pixels)) return out;
+    for (var i = 0; i < total; i++) {
+      var v = i < pixels.length ? Number(pixels[i]) : -1;
+      out[i] = (Number.isInteger(v) && v >= 0 && v <= 15) ? v : -1;
+    }
+    return out;
+  }
+
+  function pixelsToMatrix(pixels, width, height) {
+    var rows = [];
+    for (var y = 0; y < height; y++) {
+      var line = '';
+      for (var x = 0; x < width; x++) {
+        var idx = y * width + x;
+        var colorIdx = idx < pixels.length ? pixels[idx] : -1;
+        line += Palette.indexToChar(colorIdx);
+      }
+      rows.push(line);
+    }
+    return rows;
+  }
+
+  function matrixToPixels(matrix, widthOverride, heightOverride) {
+    var rows = Array.isArray(matrix) ? matrix : [];
+    var h = clampDimension(heightOverride || rows.length || 16, 16);
+    var inferredW = widthOverride || 0;
+    if (!inferredW) {
+      for (var i = 0; i < rows.length; i++) {
+        if (typeof rows[i] === 'string' && rows[i].length > inferredW) {
+          inferredW = rows[i].length;
+        }
+      }
+    }
+    var w = clampDimension(inferredW || 16, 16);
+    var pixels = createEmptyPixels(w, h);
+
+    for (var y = 0; y < h; y++) {
+      var rowStr = typeof rows[y] === 'string' ? rows[y] : '';
+      for (var x = 0; x < w; x++) {
+        var ch = x < rowStr.length ? rowStr.charAt(x) : '.';
+        pixels[y * w + x] = Palette.charToIndex(ch);
+      }
+    }
+    return { width: w, height: h, pixels: pixels };
+  }
+
+  function SpriteModel(width, height, name) {
+    this.id = 'aop_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+    this.name = (name || 'Novo Sprite').trim() || 'Novo Sprite';
+    this.width = clampDimension(width, 16);
+    this.height = clampDimension(height, 16);
+    this.fps = 8;
+    this.loop = true;
+    this.frameSeq = 1;
+    this.createdAt = new Date().toISOString();
+    this.updatedAt = this.createdAt;
+    this.activeFrameIndex = 0;
+    var firstPixels = createEmptyPixels(this.width, this.height);
+    this.frames = [
+      {
+        id: 'frame_0',
+        index: 0,
+        duration: Math.round(1000 / this.fps),
+        pixels: firstPixels
+      }
+    ];
+    this.pixels = firstPixels;
+    this.animations = [];
+  }
+
+  SpriteModel.prototype._syncActiveFrame = function () {
+    if (!Array.isArray(this.frames) || this.frames.length === 0) {
+      var fallback = createEmptyPixels(this.width, this.height);
+      this.frames = [
+        {
+          id: 'frame_0',
+          index: 0,
+          duration: Math.round(1000 / this.fps),
+          pixels: fallback
+        }
+      ];
+    }
+    if (this.activeFrameIndex < 0) this.activeFrameIndex = 0;
+    if (this.activeFrameIndex >= this.frames.length) {
+      this.activeFrameIndex = this.frames.length - 1;
+    }
+    var dur = Math.round(1000 / this.fps);
+    for (var i = 0; i < this.frames.length; i++) {
+      this.frames[i].index = i;
+      this.frames[i].duration = dur;
+    }
+    this.pixels = this.frames[this.activeFrameIndex].pixels;
+    this.updatedAt = new Date().toISOString();
+  };
+
+  SpriteModel.prototype.getActiveFrame = function () {
+    this._syncActiveFrame();
+    return this.frames[this.activeFrameIndex];
+  };
+
+  SpriteModel.prototype.selectFrame = function (index) {
+    var idx = Math.floor(Number(index));
+    if (!Number.isInteger(idx) || idx < 0 || idx >= this.frames.length) return false;
+    this.activeFrameIndex = idx;
+    this._syncActiveFrame();
+    return true;
+  };
+
+  SpriteModel.prototype.addFrame = function (insertAfterIndex) {
+    var baseIdx = (typeof insertAfterIndex === 'number' && insertAfterIndex >= 0 && insertAfterIndex < this.frames.length)
+      ? Math.floor(insertAfterIndex)
+      : this.activeFrameIndex;
+    var targetIdx = baseIdx + 1;
+    var newId = 'frame_' + (this.frameSeq++) + '_' + Date.now();
+    var newPixels = createEmptyPixels(this.width, this.height);
+    this.frames.splice(targetIdx, 0, {
+      id: newId,
+      index: targetIdx,
+      duration: Math.round(1000 / this.fps),
+      pixels: newPixels
+    });
+    this.activeFrameIndex = targetIdx;
+    this._syncActiveFrame();
+    return this.activeFrameIndex;
+  };
+
+  SpriteModel.prototype.duplicateFrame = function (sourceIndex) {
+    var srcIdx = (typeof sourceIndex === 'number' && sourceIndex >= 0 && sourceIndex < this.frames.length)
+      ? Math.floor(sourceIndex)
+      : this.activeFrameIndex;
+    var copyPixels = this.frames[srcIdx].pixels.slice();
+    var targetIdx = srcIdx + 1;
+    var newId = 'frame_' + (this.frameSeq++) + '_' + Date.now();
+    this.frames.splice(targetIdx, 0, {
+      id: newId,
+      index: targetIdx,
+      duration: Math.round(1000 / this.fps),
+      pixels: copyPixels
+    });
+    this.activeFrameIndex = targetIdx;
+    this._syncActiveFrame();
+    return this.activeFrameIndex;
+  };
+
+  SpriteModel.prototype.removeFrame = function (targetIndex) {
+    if (this.frames.length <= 1) return false;
+    var idx = (typeof targetIndex === 'number' && targetIndex >= 0 && targetIndex < this.frames.length)
+      ? Math.floor(targetIndex)
+      : this.activeFrameIndex;
+    this.frames.splice(idx, 1);
+    if (this.activeFrameIndex >= this.frames.length) {
+      this.activeFrameIndex = this.frames.length - 1;
+    }
+    this._syncActiveFrame();
+    return true;
+  };
+
+  SpriteModel.prototype.moveFrame = function (fromIndex, toIndex) {
+    var from = Math.floor(Number(fromIndex));
+    var to = Math.floor(Number(toIndex));
+    if (from < 0 || from >= this.frames.length || to < 0 || to >= this.frames.length || from === to) {
+      return false;
+    }
+    var moved = this.frames.splice(from, 1)[0];
+    this.frames.splice(to, 0, moved);
+    this.activeFrameIndex = to;
+    this._syncActiveFrame();
+    return true;
+  };
+
+  SpriteModel.prototype.setFPS = function (fps) {
+    this.fps = clampFPS(fps, this.fps);
+    this._syncActiveFrame();
+    return this.fps;
+  };
+
+  SpriteModel.prototype.setLoop = function (loop) {
+    this.loop = Boolean(loop);
+    this.updatedAt = new Date().toISOString();
+    return this.loop;
+  };
+
+  SpriteModel.prototype.getPixel = function (x, y) {
+    var ix = Math.floor(x);
+    var iy = Math.floor(y);
+    if (ix < 0 || ix >= this.width || iy < 0 || iy >= this.height) return -1;
+    return this.pixels[iy * this.width + ix];
+  };
+
+  SpriteModel.prototype.setPixel = function (x, y, colorIndex) {
+    var ix = Math.floor(x);
+    var iy = Math.floor(y);
+    if (ix < 0 || ix >= this.width || iy < 0 || iy >= this.height) return false;
+    var norm = (Number.isInteger(colorIndex) && colorIndex >= 0 && colorIndex <= 15) ? colorIndex : -1;
+    var pos = iy * this.width + ix;
+    if (this.pixels[pos] === norm) return false;
+    this.pixels[pos] = norm;
+    this.updatedAt = new Date().toISOString();
+    return true;
+  };
+
+  SpriteModel.prototype.clonePixels = function () {
+    return this.pixels.slice();
+  };
+
+  SpriteModel.prototype.replacePixels = function (newPixels) {
+    if (!Array.isArray(newPixels) || newPixels.length !== this.width * this.height) return false;
+    for (var i = 0; i < this.pixels.length; i++) {
+      var v = Number(newPixels[i]);
+      this.pixels[i] = (Number.isInteger(v) && v >= 0 && v <= 15) ? v : -1;
+    }
+    if (this.frames && this.frames[this.activeFrameIndex]) {
+      this.frames[this.activeFrameIndex].pixels = this.pixels;
+    }
+    this.updatedAt = new Date().toISOString();
+    return true;
+  };
+
+  SpriteModel.prototype.clear = function () {
+    for (var i = 0; i < this.pixels.length; i++) {
+      this.pixels[i] = -1;
+    }
+    this.updatedAt = new Date().toISOString();
+  };
+
+  SpriteModel.prototype.resize = function (newWidth, newHeight, preserveContent) {
+    var nw = clampDimension(newWidth, this.width);
+    var nh = clampDimension(newHeight, this.height);
+    var oldW = this.width;
+    var oldH = this.height;
+
+    for (var f = 0; f < this.frames.length; f++) {
+      var oldPixels = this.frames[f].pixels;
+      var nextPixels = createEmptyPixels(nw, nh);
+      if (preserveContent) {
+        var copyW = Math.min(oldW, nw);
+        var copyH = Math.min(oldH, nh);
+        for (var y = 0; y < copyH; y++) {
+          for (var x = 0; x < copyW; x++) {
+            nextPixels[y * nw + x] = oldPixels[y * oldW + x];
+          }
+        }
+      }
+      this.frames[f].pixels = nextPixels;
+    }
+
+    this.width = nw;
+    this.height = nh;
+    this._syncActiveFrame();
+  };
+
+  /**
+   * Retorna a matriz de texto do quadro especificado (ou do quadro atual) compatível com createSprite() do Neon-AO 1.0.
+   */
+  SpriteModel.prototype.toMatrix = function (frameIndex) {
+    var idx = (typeof frameIndex === 'number' && frameIndex >= 0 && frameIndex < this.frames.length)
+      ? Math.floor(frameIndex)
+      : this.activeFrameIndex;
+    return pixelsToMatrix(this.frames[idx].pixels, this.width, this.height);
+  };
+
+  /**
+   * Retorna todas as matrizes de quadros para uso direto com SpriteAnimator do Neon-AO 1.0.
+   */
+  SpriteModel.prototype.toFrameMatrices = function () {
+    var self = this;
+    return this.frames.map(function (f) {
+      return pixelsToMatrix(f.pixels, self.width, self.height);
+    });
+  };
+
+  AOprite.Model = {
+    SpriteModel: SpriteModel,
+    clampDimension: clampDimension,
+    clampFPS: clampFPS,
+    createEmptyPixels: createEmptyPixels,
+    normalizePixels: normalizePixels,
+    pixelsToMatrix: pixelsToMatrix,
+    matrixToPixels: matrixToPixels
+  };
+
+  /* ==========================================================================
+     3. MÓDULO DE HISTÓRICO (DESFAZER / REFAZER POR QUADRO)
+     ========================================================================== */
+  function HistoryManager(maxSteps) {
+    this.maxSteps = maxSteps || 60;
+    this.stacks = {};
+    this.activeContext = 'frame_0';
+    this.undoStack = [];
+    this.redoStack = [];
+    this.setContext('frame_0');
+  }
+
+  HistoryManager.prototype.setContext = function (contextId) {
+    var key = String(contextId || 'default');
+    this.activeContext = key;
+    if (!this.stacks[key]) {
+      this.stacks[key] = { undo: [], redo: [] };
+    }
+    this.undoStack = this.stacks[key].undo;
+    this.redoStack = this.stacks[key].redo;
+  };
+
+  HistoryManager.prototype.record = function (pixelsSnapshot) {
+    this.undoStack.push(pixelsSnapshot.slice());
+    if (this.undoStack.length > this.maxSteps) {
+      this.undoStack.shift();
+    }
+    this.redoStack.length = 0;
+  };
+
+  HistoryManager.prototype.canUndo = function () {
+    return this.undoStack.length > 0;
+  };
+
+  HistoryManager.prototype.canRedo = function () {
+    return this.redoStack.length > 0;
+  };
+
+  HistoryManager.prototype.undo = function (currentPixels) {
+    if (!this.canUndo()) return null;
+    this.redoStack.push(currentPixels.slice());
+    return this.undoStack.pop();
+  };
+
+  HistoryManager.prototype.redo = function (currentPixels) {
+    if (!this.canRedo()) return null;
+    this.undoStack.push(currentPixels.slice());
+    return this.redoStack.pop();
+  };
+
+  HistoryManager.prototype.clear = function (contextId) {
+    if (contextId) {
+      delete this.stacks[contextId];
+      if (this.activeContext === contextId) {
+        this.setContext(contextId);
+      }
+    } else {
+      this.stacks = {};
+      this.setContext(this.activeContext);
+    }
+  };
+
+  AOprite.History = HistoryManager;
+
+  /* ==========================================================================
+     4. MÓDULO DE FERRAMENTAS DE DESENHO E SELEÇÃO LIVRE (LAÇO)
+     ========================================================================== */
+  function getBresenhamPoints(x0, y0, x1, y1) {
+    var ix0 = Math.floor(x0);
+    var iy0 = Math.floor(y0);
+    var ix1 = Math.floor(x1);
+    var iy1 = Math.floor(y1);
+
+    var pts = [];
+    var dx = Math.abs(ix1 - ix0);
+    var dy = -Math.abs(iy1 - iy0);
+    var sx = ix0 < ix1 ? 1 : -1;
+    var sy = iy0 < iy1 ? 1 : -1;
+    var err = dx + dy;
+
+    while (true) {
+      pts.push({ x: ix0, y: iy0 });
+      if (ix0 === ix1 && iy0 === iy1) break;
+      var e2 = 2 * err;
+      if (e2 >= dy) {
+        err += dy;
+        ix0 += sx;
+      }
+      if (e2 <= dx) {
+        err += dx;
+        iy0 += sy;
+      }
+    }
+    return pts;
+  }
+
+  function buildClosedLassoContour(points, width, height) {
+    if (!Array.isArray(points) || points.length === 0) return [];
+    var clamped = [];
+    for (var i = 0; i < points.length; i++) {
+      clamped.push({
+        x: Math.max(0, Math.min(width - 1, Math.floor(points[i].x))),
+        y: Math.max(0, Math.min(height - 1, Math.floor(points[i].y)))
+      });
+    }
+    var contour = [];
+    for (var j = 0; j < clamped.length; j++) {
+      var curr = clamped[j];
+      var next = clamped[(j + 1) % clamped.length];
+      var seg = getBresenhamPoints(curr.x, curr.y, next.x, next.y);
+      for (var s = 0; s < seg.length; s++) {
+        var pt = seg[s];
+        if (contour.length === 0 ||
+            contour[contour.length - 1].x !== pt.x ||
+            contour[contour.length - 1].y !== pt.y) {
+          contour.push(pt);
+        }
+      }
+    }
+    return contour;
+  }
+
+  function isPointInPolygon(px, py, polygon) {
+    if (!polygon || polygon.length < 3) return false;
+    var inside = false;
+    for (var i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+      var xi = polygon[i].x + 0.5;
+      var yi = polygon[i].y + 0.5;
+      var xj = polygon[j].x + 0.5;
+      var yj = polygon[j].y + 0.5;
+      var intersect = ((yi > py) !== (yj > py)) &&
+        (px < ((xj - xi) * (py - yi)) / (yj - yi + 1e-12) + xi);
+      if (intersect) inside = !inside;
+    }
+    return inside;
+  }
+
+  var Tools = {
+    getBresenhamPoints: getBresenhamPoints,
+    buildClosedLassoContour: buildClosedLassoContour,
+    isPointInPolygon: isPointInPolygon,
+
+    /**
+     * Desenha linha contínua pixel-perfect (Bresenham) entre (x0, y0) e (x1, y1).
+     */
+    drawContinuousStroke: function (model, x0, y0, x1, y1, colorIndex) {
+      var pts = getBresenhamPoints(x0, y0, x1, y1);
+      var modified = false;
+      for (var i = 0; i < pts.length; i++) {
+        if (model.setPixel(pts[i].x, pts[i].y, colorIndex)) {
+          modified = true;
+        }
+      }
+      return modified;
+    },
+
+    /**
+     * Preenchimento (Flood Fill 4-conectado) sobre região contínua da mesma cor/transparência.
+     */
+    floodFill: function (model, startX, startY, fillColorIndex) {
+      var sx = Math.floor(startX);
+      var sy = Math.floor(startY);
+      var w = model.width;
+      var h = model.height;
+      if (sx < 0 || sx >= w || sy < 0 || sy >= h) return false;
+
+      var targetColor = (Number.isInteger(fillColorIndex) && fillColorIndex >= 0 && fillColorIndex <= 15)
+        ? fillColorIndex
+        : -1;
+      var startColor = model.getPixel(sx, sy);
+      if (startColor === targetColor) return false;
+
+      var queueX = [sx];
+      var queueY = [sy];
+      model.pixels[sy * w + sx] = targetColor;
+
+      var head = 0;
+      while (head < queueX.length) {
+        var cx = queueX[head];
+        var cy = queueY[head];
+        head++;
+
+        var nx, ny;
+        nx = cx - 1; ny = cy;
+        if (nx >= 0 && model.pixels[ny * w + nx] === startColor) {
+          model.pixels[ny * w + nx] = targetColor;
+          queueX.push(nx); queueY.push(ny);
+        }
+        nx = cx + 1; ny = cy;
+        if (nx < w && model.pixels[ny * w + nx] === startColor) {
+          model.pixels[ny * w + nx] = targetColor;
+          queueX.push(nx); queueY.push(ny);
+        }
+        nx = cx; ny = cy - 1;
+        if (ny >= 0 && model.pixels[ny * w + nx] === startColor) {
+          model.pixels[ny * w + nx] = targetColor;
+          queueX.push(nx); queueY.push(ny);
+        }
+        nx = cx; ny = cy + 1;
+        if (ny < h && model.pixels[ny * w + nx] === startColor) {
+          model.pixels[ny * w + nx] = targetColor;
+          queueX.push(nx); queueY.push(ny);
+        }
+      }
+
+      model.updatedAt = new Date().toISOString();
+      return true;
+    },
+
+    /**
+     * Conta-gotas: retorna o índice da cor do pixel clicado (0..15) ou -1 se transparente.
+     */
+    samplePixel: function (model, x, y) {
+      return model.getPixel(x, y);
+    },
+
+    /**
+     * Etapa 2 — Cria seleção livre por contorno (Laço) no quadro atual.
+     */
+    createLassoSelection: function (pixels, gridWidth, gridHeight, rawPoints) {
+      var contour = buildClosedLassoContour(rawPoints, gridWidth, gridHeight);
+      if (contour.length === 0) return null;
+
+      var minX = gridWidth - 1;
+      var minY = gridHeight - 1;
+      var maxX = 0;
+      var maxY = 0;
+
+      for (var i = 0; i < contour.length; i++) {
+        if (contour[i].x < minX) minX = contour[i].x;
+        if (contour[i].y < minY) minY = contour[i].y;
+        if (contour[i].x > maxX) maxX = contour[i].x;
+        if (contour[i].y > maxY) maxY = contour[i].y;
+      }
+
+      var selW = maxX - minX + 1;
+      var selH = maxY - minY + 1;
+      var localMask = new Uint8Array(selW * selH);
+      var buffer = new Array(selW * selH);
+      for (var b = 0; b < buffer.length; b++) buffer[b] = -1;
+
+      // Marca pixels do contorno
+      for (var c = 0; c < contour.length; c++) {
+        var lx = contour[c].x - minX;
+        var ly = contour[c].y - minY;
+        localMask[ly * selW + lx] = 1;
+      }
+
+      // Marca pixels internos ao polígono fechado
+      if (contour.length >= 3) {
+        for (var gy = minY; gy <= maxY; gy++) {
+          for (var gx = minX; gx <= maxX; gx++) {
+            var lIdx = (gy - minY) * selW + (gx - minX);
+            if (localMask[lIdx] === 0 && isPointInPolygon(gx + 0.5, gy + 0.5, contour)) {
+              localMask[lIdx] = 1;
+            }
+          }
+        }
+      }
+
+      // Copia pixels selecionados do quadro atual
+      for (var ry = 0; ry < selH; ry++) {
+        for (var rx = 0; rx < selW; rx++) {
+          var mIdx = ry * selW + rx;
+          if (localMask[mIdx] === 1) {
+            buffer[mIdx] = pixels[(minY + ry) * gridWidth + (minX + rx)];
+          }
+        }
+      }
+
+      return {
+        x: minX,
+        y: minY,
+        width: selW,
+        height: selH,
+        localMask: localMask,
+        buffer: buffer,
+        contourPoints: contour
+      };
+    },
+
+    isPointInSelection: function (region, gx, gy) {
+      if (!region) return false;
+      var lx = Math.floor(gx) - region.x;
+      var ly = Math.floor(gy) - region.y;
+      if (lx < 0 || lx >= region.width || ly < 0 || ly >= region.height) return false;
+      return region.localMask[ly * region.width + lx] === 1;
+    },
+
+    clearSelectedPixelsFromGrid: function (pixels, gridWidth, gridHeight, region) {
+      if (!region) return;
+      for (var ly = 0; ly < region.height; ly++) {
+        var gy = region.y + ly;
+        if (gy < 0 || gy >= gridHeight) continue;
+        for (var lx = 0; lx < region.width; lx++) {
+          var gx = region.x + lx;
+          if (gx < 0 || gx >= gridWidth) continue;
+          if (region.localMask[ly * region.width + lx] === 1) {
+            pixels[gy * gridWidth + gx] = -1;
+          }
+        }
+      }
+    },
+
+    stampSelectionOntoGrid: function (basePixels, gridWidth, gridHeight, region, destX, destY) {
+      var result = basePixels.slice();
+      var ox = Math.floor(destX);
+      var oy = Math.floor(destY);
+      for (var ly = 0; ly < region.height; ly++) {
+        var gy = oy + ly;
+        if (gy < 0 || gy >= gridHeight) continue;
+        for (var lx = 0; lx < region.width; lx++) {
+          var gx = ox + lx;
+          if (gx < 0 || gx >= gridWidth) continue;
+          var lIdx = ly * region.width + lx;
+          if (region.localMask[lIdx] === 1) {
+            var colorIdx = region.buffer[lIdx];
+            if (colorIdx >= 0 && colorIdx <= 15) {
+              result[gy * gridWidth + gx] = colorIdx;
+            }
+          }
+        }
+      }
+      return result;
+    },
+
+    moveLassoSelection: function (pixels, gridWidth, gridHeight, region, newX, newY) {
+      var base = pixels.slice();
+      Tools.clearSelectedPixelsFromGrid(base, gridWidth, gridHeight, region);
+      var stamped = Tools.stampSelectionOntoGrid(base, gridWidth, gridHeight, region, newX, newY);
+      for (var i = 0; i < pixels.length; i++) {
+        pixels[i] = stamped[i];
+      }
+      return {
+        x: Math.floor(newX),
+        y: Math.floor(newY),
+        width: region.width,
+        height: region.height,
+        localMask: region.localMask,
+        buffer: region.buffer,
+        contourPoints: region.contourPoints
+      };
+    },
+
+    copyLassoSelection: function (region) {
+      if (!region) return null;
+      return {
+        width: region.width,
+        height: region.height,
+        localMask: new Uint8Array(region.localMask),
+        buffer: region.buffer.slice()
+      };
+    },
+
+    cutLassoSelection: function (pixels, gridWidth, gridHeight, region) {
+      if (!region) return null;
+      var clip = Tools.copyLassoSelection(region);
+      Tools.clearSelectedPixelsFromGrid(pixels, gridWidth, gridHeight, region);
+      return clip;
+    },
+
+    pasteLassoClipboard: function (pixels, gridWidth, gridHeight, clipboard, destX, destY) {
+      if (!clipboard) return null;
+      var ox = typeof destX === 'number' ? Math.floor(destX) : 0;
+      var oy = typeof destY === 'number' ? Math.floor(destY) : 0;
+      var stamped = Tools.stampSelectionOntoGrid(pixels, gridWidth, gridHeight, clipboard, ox, oy);
+      for (var i = 0; i < pixels.length; i++) {
+        pixels[i] = stamped[i];
+      }
+      return {
+        x: ox,
+        y: oy,
+        width: clipboard.width,
+        height: clipboard.height,
+        localMask: new Uint8Array(clipboard.localMask),
+        buffer: clipboard.buffer.slice(),
+        contourPoints: []
+      };
+    }
+  };
+
+  AOprite.Tools = Tools;
+
+  /* ==========================================================================
+     5. MÓDULO DE ARMAZENAMENTO, FORMATO ".AOP" (v1.0/v2.0) E EXPORTAÇÕES (ETAPA 2)
+     ========================================================================== */
+  var STORAGE_KEY_PROJECTS = 'aoprite_v1_saved_projects';
+  var STORAGE_KEY_AUTOSAVE = 'aoprite_v1_working_project';
+
+  function sanitizeFileName(name, fallback) {
+    return (name || fallback || 'sprite')
+      .toLowerCase()
+      .replace(/[^a-z0-9-_]+/g, '-')
+      .replace(/^-+|-+$/g, '') || (fallback || 'sprite');
+  }
+
+  function triggerBlobDownload(blob, fileName) {
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function () {
+      URL.revokeObjectURL(url);
+    }, 1500);
+  }
+
+  /**
+   * Codificador LZW para GIF89a em JavaScript puro (zero dependências externas).
+   */
+  function lzwEncodeGIF(indices, minCodeSize) {
+    var clearCode = 1 << minCodeSize;
+    var eoiCode = clearCode + 1;
+    var codeSize = minCodeSize + 1;
+    var nextCode = eoiCode + 1;
+    var dict = new Map();
+
+    var bytes = [];
+    var bitBuffer = 0;
+    var bitCount = 0;
+
+    function emitCode(code) {
+      bitBuffer |= (code << bitCount);
+      bitCount += codeSize;
+      while (bitCount >= 8) {
+        bytes.push(bitBuffer & 0xff);
+        bitBuffer >>= 8;
+        bitCount -= 8;
+      }
+    }
+
+    emitCode(clearCode);
+    if (!indices || indices.length === 0) {
+      emitCode(eoiCode);
+      if (bitCount > 0) bytes.push(bitBuffer & 0xff);
+      return bytes;
+    }
+
+    var prefix = indices[0];
+    for (var i = 1; i < indices.length; i++) {
+      var k = indices[i];
+      var key = (prefix << 8) | k;
+      var existing = dict.get(key);
+      if (existing !== undefined) {
+        prefix = existing;
+      } else {
+        emitCode(prefix);
+        if (nextCode < 4096) {
+          dict.set(key, nextCode++);
+          if (nextCode > (1 << codeSize) && codeSize < 12) {
+            codeSize++;
+          }
+        } else {
+          emitCode(clearCode);
+          dict.clear();
+          codeSize = minCodeSize + 1;
+          nextCode = eoiCode + 1;
+        }
+        prefix = k;
+      }
+    }
+
+    emitCode(prefix);
+    emitCode(eoiCode);
+    if (bitCount > 0) {
+      bytes.push(bitBuffer & 0xff);
+    }
+    return bytes;
+  }
+
+  var Storage = {
+    /**
+     * Empacota o estado atual no formato oficial ".aop" (retrocompatível v1.0 / v2.0).
+     */
+    serializeProject: function (model, editorState) {
+      var state = editorState || {};
+      var nowIso = new Date().toISOString();
+      var fps = clampFPS(model.fps || 8, 8);
+      var loop = model.loop !== false;
+      var frameDuration = Math.round(1000 / fps);
+
+      var serializedFrames = (model.frames || []).map(function (f, idx) {
+        var norm = normalizePixels(f.pixels, model.width, model.height);
+        return {
+          id: f.id || ('frame_' + idx),
+          index: idx,
+          duration: frameDuration,
+          pixels: norm,
+          matrix: pixelsToMatrix(norm, model.width, model.height)
+        };
+      });
+
+      if (serializedFrames.length === 0) {
+        var pCopy = model.clonePixels();
+        serializedFrames.push({
+          id: 'frame_0',
+          index: 0,
+          duration: frameDuration,
+          pixels: pCopy,
+          matrix: pixelsToMatrix(pCopy, model.width, model.height)
+        });
+      }
+
+      var activeIdx = (typeof model.activeFrameIndex === 'number' &&
+        model.activeFrameIndex >= 0 &&
+        model.activeFrameIndex < serializedFrames.length)
+        ? Math.floor(model.activeFrameIndex)
+        : 0;
+
+      var activeFrame = serializedFrames[activeIdx];
+      var isMultiFrame = serializedFrames.length > 1;
+
+      return {
+        format: 'AOprite',
+        version: isMultiFrame ? '2.0' : '1.0',
+        schemaVersion: isMultiFrame ? 2 : 1,
+        id: model.id,
+        name: model.name,
+        width: model.width,
+        height: model.height,
+        fps: fps,
+        loop: loop,
+        transparentSymbol: '.',
+        palette: PALETTE_ENTRIES.map(function (c) {
+          return { index: c.index, char: c.char, hex: c.hex };
+        }),
+        pixels: activeFrame.pixels.slice(),
+        matrix: activeFrame.matrix.slice(),
+        activeFrameIndex: activeIdx,
+        frames: serializedFrames,
+        animations: [
+          {
+            name: 'default',
+            fps: fps,
+            loop: loop,
+            frameOrder: serializedFrames.map(function (_, idx) { return idx; })
+          }
+        ],
+        metadata: {
+          app: 'AOprite',
+          stage: 3,
+          copyright: 'Forge Tosco (2026)',
+          license: 'MIT',
+          createdAt: model.createdAt || nowIso,
+          updatedAt: nowIso,
+          selectedColor: typeof state.selectedColor === 'number' ? state.selectedColor : 7,
+          showGrid: state.showGrid !== false
+        }
+      };
+    },
+
+    /**
+     * Valida e reconstrói um projeto a partir de um objeto ou texto JSON ".aop" (v1.0 ou v2.0).
+     */
+    deserializeProject: function (rawInput) {
+      var data;
+      try {
+        data = typeof rawInput === 'string' ? JSON.parse(rawInput) : rawInput;
+      } catch (_err) {
+        throw new Error('Arquivo .aop inválido: JSON malformado.');
+      }
+
+      if (!data || typeof data !== 'object' || data.format !== 'AOprite') {
+        throw new Error('Formato de arquivo inválido. Selecione um arquivo .aop válido do AOprite.');
+      }
+
+      var rawW = Number(data.width);
+      var rawH = Number(data.height);
+      if (!Number.isInteger(rawW) || !Number.isInteger(rawH) || rawW < MIN_DIM || rawW > MAX_DIM || rawH < MIN_DIM || rawH > MAX_DIM) {
+        throw new Error('Dimensões do sprite inválidas no arquivo .aop (permitido: 1 a 64 px).');
+      }
+      var w = rawW;
+      var h = rawH;
+
+      if (Array.isArray(data.frames) && data.frames.length > 128) {
+        throw new Error('Arquivo .aop inválido: número de quadros excede o limite máximo (128).');
+      }
+
+      var fps = clampFPS(data.fps || 8, 8);
+      var loop = data.loop !== false;
+      var parsedFrames = [];
+
+      if (Array.isArray(data.frames) && data.frames.length > 0) {
+        for (var i = 0; i < data.frames.length; i++) {
+          var f = data.frames[i];
+          if (!f || typeof f !== 'object') continue;
+          var fPixels = null;
+          if (Array.isArray(f.pixels) && f.pixels.length === w * h) {
+            fPixels = normalizePixels(f.pixels, w, h);
+          } else if (Array.isArray(f.matrix) && f.matrix.length === h && f.matrix.every(function (r) { return typeof r === 'string'; })) {
+            fPixels = matrixToPixels(f.matrix, w, h).pixels;
+          }
+          if (fPixels) {
+            parsedFrames.push({
+              id: typeof f.id === 'string' ? f.id : ('frame_' + i),
+              index: parsedFrames.length,
+              duration: Math.round(1000 / fps),
+              pixels: fPixels
+            });
+          }
+        }
+      }
+
+      // Compatibilidade total com projetos .aop v1.0 de quadro único
+      if (parsedFrames.length === 0) {
+        var singlePixels = null;
+        if (Array.isArray(data.pixels) && data.pixels.length === w * h) {
+          singlePixels = normalizePixels(data.pixels, w, h);
+        } else if (Array.isArray(data.matrix) && data.matrix.length === h && data.matrix.every(function (r) { return typeof r === 'string'; })) {
+          singlePixels = matrixToPixels(data.matrix, w, h).pixels;
+        }
+        if (singlePixels) {
+          parsedFrames.push({
+            id: 'frame_0',
+            index: 0,
+            duration: Math.round(1000 / fps),
+            pixels: singlePixels
+          });
+        }
+      }
+
+      if (parsedFrames.length === 0) {
+        throw new Error('Dados de pixels ausentes ou corrompidos no arquivo .aop.');
+      }
+
+      var model = new SpriteModel(w, h, data.name || 'Sprite Importado');
+      if (typeof data.id === 'string' && data.id.trim()) {
+        model.id = data.id.trim();
+      }
+      if (data.metadata && typeof data.metadata.createdAt === 'string') {
+        model.createdAt = data.metadata.createdAt;
+      }
+      model.fps = fps;
+      model.loop = loop;
+      model.frames = parsedFrames;
+      model.frameSeq = parsedFrames.length + 1;
+      var activeIdx = (typeof data.activeFrameIndex === 'number' &&
+        data.activeFrameIndex >= 0 &&
+        data.activeFrameIndex < parsedFrames.length)
+        ? Math.floor(data.activeFrameIndex)
+        : 0;
+      model.selectFrame(activeIdx);
+
+      return {
+        model: model,
+        metadata: data.metadata || {}
+      };
+    },
+
+    saveWorkingState: function (model, editorState) {
+      try {
+        var serialized = Storage.serializeProject(model, editorState);
+        localStorage.setItem(STORAGE_KEY_AUTOSAVE, JSON.stringify(serialized));
+        return true;
+      } catch (_e) {
+        return false;
+      }
+    },
+
+    loadWorkingState: function () {
+      try {
+        var raw = localStorage.getItem(STORAGE_KEY_AUTOSAVE);
+        if (!raw) return null;
+        return Storage.deserializeProject(raw);
+      } catch (_e) {
+        return null;
+      }
+    },
+
+    listSavedProjects: function () {
+      try {
+        var raw = localStorage.getItem(STORAGE_KEY_PROJECTS);
+        if (!raw) return [];
+        var list = JSON.parse(raw);
+        if (!Array.isArray(list)) return [];
+        return list.filter(function (item) {
+          return item && typeof item === 'object' && item.format === 'AOprite' &&
+            Number.isInteger(Number(item.width)) && Number.isInteger(Number(item.height));
+        });
+      } catch (_e) {
+        return [];
+      }
+    },
+
+    saveProjectToDevice: function (model, editorState) {
+      var list = Storage.listSavedProjects();
+      var serialized = Storage.serializeProject(model, editorState);
+
+      var existingIdx = -1;
+      for (var i = 0; i < list.length; i++) {
+        if (list[i] && (list[i].id === serialized.id || list[i].name === serialized.name)) {
+          existingIdx = i;
+          break;
+        }
+      }
+
+      if (existingIdx >= 0) {
+        serialized.id = list[existingIdx].id;
+        model.id = serialized.id;
+        list[existingIdx] = serialized;
+      } else {
+        list.unshift(serialized);
+      }
+
+      try {
+        localStorage.setItem(STORAGE_KEY_PROJECTS, JSON.stringify(list));
+        localStorage.setItem(STORAGE_KEY_AUTOSAVE, JSON.stringify(serialized));
+        return serialized;
+      } catch (_e) {
+        throw new Error('Não foi possível salvar no armazenamento local do dispositivo.');
+      }
+    },
+
+    deleteProjectFromDevice: function (projectId) {
+      var list = Storage.listSavedProjects().filter(function (item) {
+        return item && item.id !== projectId;
+      });
+      try {
+        localStorage.setItem(STORAGE_KEY_PROJECTS, JSON.stringify(list));
+        return list;
+      } catch (_e) {
+        return list;
+      }
+    },
+
+    exportAOPFile: function (model, editorState) {
+      var serialized = Storage.serializeProject(model, editorState);
+      var jsonStr = JSON.stringify(serialized, null, 2);
+      var fileName = sanitizeFileName(model.name, 'sprite') + '.aop';
+      var blob = new Blob([jsonStr], { type: 'application/json;charset=utf-8' });
+      triggerBlobDownload(blob, fileName);
+      return { fileName: fileName, data: serialized, json: jsonStr };
+    },
+
+    /* ========================================================================
+       ETAPA 2: EXPORTAÇÃO PNG (IMAGEM ESTÁTICA DO QUADRO SELECIONADO)
+       ======================================================================== */
+    buildFrameRGBABuffer: function (pixels, width, height) {
+      var rgba = new Uint8ClampedArray(width * height * 4);
+      for (var i = 0; i < width * height; i++) {
+        var colorIdx = i < pixels.length ? pixels[i] : -1;
+        var offset = i * 4;
+        if (colorIdx >= 0 && colorIdx <= 15) {
+          var rgb = PALETTE_ENTRIES[colorIdx].rgb;
+          rgba[offset] = rgb[0];
+          rgba[offset + 1] = rgb[1];
+          rgba[offset + 2] = rgb[2];
+          rgba[offset + 3] = 255;
+        } else {
+          rgba[offset] = 0;
+          rgba[offset + 1] = 0;
+          rgba[offset + 2] = 0;
+          rgba[offset + 3] = 0;
+        }
+      }
+      return rgba;
+    },
+
+    exportPNGFile: function (model, frameIndex) {
+      var idx = (typeof frameIndex === 'number' && frameIndex >= 0 && frameIndex < model.frames.length)
+        ? Math.floor(frameIndex)
+        : model.activeFrameIndex;
+      var frame = model.frames[idx];
+      var w = model.width;
+      var h = model.height;
+      var rgba = Storage.buildFrameRGBABuffer(frame.pixels, w, h);
+
+      var offCanvas = document.createElement('canvas');
+      offCanvas.width = w;
+      offCanvas.height = h;
+      var offCtx = offCanvas.getContext('2d');
+      offCtx.imageSmoothingEnabled = false;
+      var imgData = new ImageData(rgba, w, h);
+      offCtx.putImageData(imgData, 0, 0);
+
+      var dataUrl = offCanvas.toDataURL('image/png');
+      var suffix = model.frames.length > 1 ? ('-q' + (idx + 1)) : '';
+      var fileName = sanitizeFileName(model.name, 'sprite') + suffix + '.png';
+
+      if (offCanvas.toBlob) {
+        offCanvas.toBlob(function (blob) {
+          if (blob) triggerBlobDownload(blob, fileName);
+        }, 'image/png');
+      } else {
+        var a = document.createElement('a');
+        a.href = dataUrl;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      }
+
+      return {
+        fileName: fileName,
+        width: w,
+        height: h,
+        frameIndex: idx,
+        dataUrl: dataUrl,
+        rgba: rgba
+      };
+    },
+
+    /* ========================================================================
+       ETAPA 2: EXPORTAÇÃO GIF89a ANIMADO (JS PURO SEM BIBLIOTECAS EXTERNAS)
+       ======================================================================== */
+    encodeAnimatedGIF89a: function (model) {
+      var width = clampDimension(model.width, 16);
+      var height = clampDimension(model.height, 16);
+      var fps = clampFPS(model.fps || 8, 8);
+      var loop = model.loop !== false;
+      var delayCs = Math.max(2, Math.round(100 / fps)); // Centésimos de segundo
+
+      var out = [];
+      function writeByte(b) { out.push(b & 0xff); }
+      function writeUInt16LE(v) { out.push(v & 0xff, (v >> 8) & 0xff); }
+      function writeASCII(str) {
+        for (var i = 0; i < str.length; i++) out.push(str.charCodeAt(i) & 0xff);
+      }
+
+      // 1. Header GIF89a
+      writeASCII('GIF89a');
+
+      // 2. Logical Screen Descriptor (32 cores na Global Color Table -> 0xF4)
+      writeUInt16LE(width);
+      writeUInt16LE(height);
+      writeByte(0xf4);
+      writeByte(16); // Background color index = 16 (transparente)
+      writeByte(0);
+
+      // 3. Global Color Table (32 * 3 = 96 bytes; 0..15 = PICO-8, 16..31 = reservado/transparente)
+      for (var c = 0; c < 32; c++) {
+        if (c < 16) {
+          var rgb = PALETTE_ENTRIES[c].rgb;
+          writeByte(rgb[0]);
+          writeByte(rgb[1]);
+          writeByte(rgb[2]);
+        } else {
+          writeByte(0);
+          writeByte(0);
+          writeByte(0);
+        }
+      }
+
+      // 4. Netscape 2.0 Application Extension para loop
+      if (loop) {
+        writeByte(0x21);
+        writeByte(0xff);
+        writeByte(0x0b);
+        writeASCII('NETSCAPE2.0');
+        writeByte(0x03);
+        writeByte(0x01);
+        writeUInt16LE(0);
+        writeByte(0x00);
+      }
+
+      // 5. Quadros da animação
+      var frames = (model.frames && model.frames.length > 0)
+        ? model.frames
+        : [{ pixels: model.pixels }];
+      var minCodeSize = 5;
+
+      for (var f = 0; f < frames.length; f++) {
+        var fPixels = frames[f].pixels;
+
+        // Graphic Control Extension (Disposal = 2 restore to bg/transparent, Transp Flag = 1 -> 0x09)
+        writeByte(0x21);
+        writeByte(0xf9);
+        writeByte(0x04);
+        writeByte(0x09);
+        writeUInt16LE(delayCs);
+        writeByte(16); // Transparent index = 16
+        writeByte(0x00);
+
+        // Image Descriptor
+        writeByte(0x2c);
+        writeUInt16LE(0);
+        writeUInt16LE(0);
+        writeUInt16LE(width);
+        writeUInt16LE(height);
+        writeByte(0x00);
+
+        var indexed = new Uint8Array(width * height);
+        for (var p = 0; p < width * height; p++) {
+          var col = p < fPixels.length ? fPixels[p] : -1;
+          indexed[p] = (col >= 0 && col <= 15) ? col : 16;
+        }
+
+        writeByte(minCodeSize);
+        var compressed = lzwEncodeGIF(indexed, minCodeSize);
+        var offset = 0;
+        while (offset < compressed.length) {
+          var chunkLen = Math.min(255, compressed.length - offset);
+          writeByte(chunkLen);
+          for (var k = 0; k < chunkLen; k++) {
+            writeByte(compressed[offset + k]);
+          }
+          offset += chunkLen;
+        }
+        writeByte(0x00);
+      }
+
+      // 6. GIF Trailer
+      writeByte(0x3b);
+      return new Uint8Array(out);
+    },
+
+    exportGIFFile: function (model) {
+      var bytes = Storage.encodeAnimatedGIF89a(model);
+      var fileName = sanitizeFileName(model.name, 'animacao') + '.gif';
+      var blob = new Blob([bytes], { type: 'image/gif' });
+      triggerBlobDownload(blob, fileName);
+      return {
+        fileName: fileName,
+        byteLength: bytes.byteLength,
+        bytes: bytes,
+        frameCount: model.frames.length,
+        fps: model.fps,
+        loop: model.loop
+      };
+    },
+
+    /* ========================================================================
+       ETAPA 2: EXPORTAÇÃO E IMPORTAÇÃO JSON ESTRUTURADO
+       ======================================================================== */
+    exportStructuredJSON: function (model) {
+      var fps = clampFPS(model.fps || 8, 8);
+      var frameDurationMs = Math.round(1000 / fps);
+      var frameDurationSeconds = Number((1 / fps).toFixed(4));
+
+      return {
+        format: 'AOprite-JSON',
+        version: '2.0',
+        documentation: 'Dados estruturados do AOprite compatíveis com Argon e Neon-AO 1.0. Caracteres 0-F representam as 16 cores PICO-8 e "." representa transparência.',
+        name: model.name,
+        width: model.width,
+        height: model.height,
+        fps: fps,
+        frameDurationMs: frameDurationMs,
+        frameDurationSeconds: frameDurationSeconds,
+        loop: model.loop !== false,
+        transparentSymbol: '.',
+        palette: PALETTE_ENTRIES.map(function (p) {
+          return { index: p.index, char: p.char, hex: p.hex, name: p.name };
+        }),
+        frameCount: model.frames.length,
+        frameOrder: model.frames.map(function (_, idx) { return idx; }),
+        frames: model.frames.map(function (f, idx) {
+          return {
+            index: idx,
+            id: f.id || ('frame_' + idx),
+            durationMs: frameDurationMs,
+            matrix: pixelsToMatrix(f.pixels, model.width, model.height),
+            pixels: f.pixels.slice()
+          };
+        })
+      };
+    },
+
+    exportJSONFile: function (model) {
+      var data = Storage.exportStructuredJSON(model);
+      var jsonStr = JSON.stringify(data, null, 2);
+      var fileName = sanitizeFileName(model.name, 'sprite') + '.json';
+      var blob = new Blob([jsonStr], { type: 'application/json;charset=utf-8' });
+      triggerBlobDownload(blob, fileName);
+      return { fileName: fileName, data: data, json: jsonStr };
+    },
+
+    importStructuredJSON: function (rawInput) {
+      var raw;
+      try {
+        raw = typeof rawInput === 'string' ? JSON.parse(rawInput) : rawInput;
+      } catch (_err) {
+        throw new Error('JSON inválido: erro de sintaxe ao analisar o arquivo.');
+      }
+      if (!raw || typeof raw !== 'object') {
+        throw new Error('JSON inválido: conteúdo vazio.');
+      }
+      if (raw.format !== 'AOprite-JSON' && raw.format !== 'AOprite') {
+        throw new Error('JSON incompatível: esperado formato "AOprite-JSON" ou "AOprite".');
+      }
+
+      var w = Number(raw.width);
+      var h = Number(raw.height);
+      if (!Number.isInteger(w) || !Number.isInteger(h) || w < MIN_DIM || w > MAX_DIM || h < MIN_DIM || h > MAX_DIM) {
+        throw new Error('JSON inválido: dimensões fora do intervalo permitido (1 a 64 px).');
+      }
+
+      var fps = clampFPS(raw.fps || 8, 8);
+      var loop = raw.loop !== false;
+      var name = (typeof raw.name === 'string' && raw.name.trim()) ? raw.name.trim() : 'Sprite JSON';
+      var extractedFrames = [];
+
+      if (Array.isArray(raw.frames) && raw.frames.length > 128) {
+        throw new Error('JSON inválido: número de quadros excede o limite máximo (128).');
+      }
+
+      if (Array.isArray(raw.frames) && raw.frames.length > 0) {
+        for (var i = 0; i < raw.frames.length; i++) {
+          var f = raw.frames[i];
+          if (!f || typeof f !== 'object') {
+            throw new Error('JSON inválido: quadro ' + (i + 1) + ' malformado.');
+          }
+          if (Array.isArray(f.pixels) && f.pixels.length === w * h) {
+            extractedFrames.push(normalizePixels(f.pixels, w, h));
+          } else if (Array.isArray(f.matrix) && f.matrix.length === h && f.matrix.every(function (r) { return typeof r === 'string'; })) {
+            extractedFrames.push(matrixToPixels(f.matrix, w, h).pixels);
+          } else {
+            throw new Error('JSON inválido: quadro ' + (i + 1) + ' incompatível com as dimensões ' + w + '×' + h + '.');
+          }
+        }
+      } else if (Array.isArray(raw.matrix) && raw.matrix.length === h && raw.matrix.every(function (r) { return typeof r === 'string'; })) {
+        extractedFrames.push(matrixToPixels(raw.matrix, w, h).pixels);
+      } else if (Array.isArray(raw.pixels) && raw.pixels.length === w * h) {
+        extractedFrames.push(normalizePixels(raw.pixels, w, h));
+      } else {
+        throw new Error('JSON inválido: nenhum quadro válido encontrado.');
+      }
+
+      var model = new SpriteModel(w, h, name);
+      model.fps = fps;
+      model.loop = loop;
+      model.frames = extractedFrames.map(function (px, idx) {
+        return {
+          id: 'frame_' + idx,
+          index: idx,
+          duration: Math.round(1000 / fps),
+          pixels: px
+        };
+      });
+      model.frameSeq = extractedFrames.length + 1;
+      model.selectFrame(0);
+      return model;
+    },
+
+    /* ========================================================================
+       ETAPA 2: EXPORTAÇÃO JS PARA INTEGRAÇÃO COM NEON-AO 1.0
+       ======================================================================== */
+    generateNeonAOJSCode: function (model) {
+      var safeIdent = (model.name || 'sprite')
+        .replace(/[^a-zA-Z0-9_]+/g, '_')
+        .replace(/^([0-9])/, '_$1')
+        .replace(/^_+|_+$/g, '')
+        .toUpperCase() || 'SPRITE';
+
+      var fps = clampFPS(model.fps || 8, 8);
+      var frameDurationSec = Number((1 / fps).toFixed(4));
+      var loop = model.loop !== false;
+      var frameMatrices = model.toFrameMatrices();
+
+      var lines = [];
+      lines.push('/**');
+      lines.push(' * Recurso exportado pelo AOprite — Forge Tosco (2026)');
+      lines.push(' * Compatível com Neon-AO 1.0 (NeonAO.Graphics.createSprite e NeonAO.SpriteAnimator)');
+      lines.push(' * Nome: ' + model.name);
+      lines.push(' * Dimensões: ' + model.width + 'x' + model.height + ' px | Quadros: ' + frameMatrices.length + ' | Velocidade: ' + fps + ' FPS | Loop: ' + (loop ? 'Sim' : 'Não'));
+      lines.push(' */');
+      lines.push('');
+
+      if (frameMatrices.length === 1) {
+        lines.push('// Matriz de texto do sprite estático ("0"-"F" = paleta PICO-8, "." = transparente)');
+        lines.push('var ' + safeIdent + '_MATRIX = [');
+        for (var r = 0; r < frameMatrices[0].length; r++) {
+          var comma = r < frameMatrices[0].length - 1 ? ',' : '';
+          lines.push("  '" + frameMatrices[0][r] + "'" + comma);
+        }
+        lines.push('];');
+        lines.push('');
+        lines.push('// Compila o sprite estático com createSprite() do Neon-AO 1.0');
+        lines.push('var ' + safeIdent + '_SPRITE = (typeof NeonAO !== "undefined" && NeonAO.Graphics)');
+        lines.push('  ? NeonAO.Graphics.createSprite(' + safeIdent + '_MATRIX)');
+        lines.push('  : ' + safeIdent + '_MATRIX;');
+        lines.push('');
+        lines.push('// Opcional: controlador SpriteAnimator de 1 quadro para uso uniforme');
+        lines.push('function create' + safeIdent + 'Animator() {');
+        lines.push('  return new NeonAO.SpriteAnimator([' + safeIdent + '_MATRIX], ' + frameDurationSec + ', ' + loop + ');');
+        lines.push('}');
+        lines.push('// Exemplo no loop do jogo: gfx.drawSprite(' + safeIdent + '_SPRITE, x, y);');
+      } else {
+        lines.push('// Matrizes de quadros da animação ("0"-"F" = paleta PICO-8, "." = transparente)');
+        lines.push('var ' + safeIdent + '_FRAMES = [');
+        for (var f = 0; f < frameMatrices.length; f++) {
+          lines.push('  // Quadro ' + (f + 1));
+          lines.push('  [');
+          for (var row = 0; row < frameMatrices[f].length; row++) {
+            var rComma = row < frameMatrices[f].length - 1 ? ',' : '';
+            lines.push("    '" + frameMatrices[f][row] + "'" + rComma);
+          }
+          var fComma = f < frameMatrices.length - 1 ? '],' : ']';
+          lines.push('  ' + fComma);
+        }
+        lines.push('];');
+        lines.push('');
+        lines.push('var ' + safeIdent + '_FPS = ' + fps + ';');
+        lines.push('var ' + safeIdent + '_FRAME_DURATION = ' + frameDurationSec + '; // segundos por quadro');
+        lines.push('var ' + safeIdent + '_LOOP = ' + loop + ';');
+        lines.push('');
+        lines.push('// Quadro inicial compilado com createSprite()');
+        lines.push('var ' + safeIdent + '_SPRITE = (typeof NeonAO !== "undefined" && NeonAO.Graphics)');
+        lines.push('  ? NeonAO.Graphics.createSprite(' + safeIdent + '_FRAMES[0])');
+        lines.push('  : ' + safeIdent + '_FRAMES[0];');
+        lines.push('');
+        lines.push('// Cria uma instância de SpriteAnimator compatível com Neon-AO 1.0');
+        lines.push('function create' + safeIdent + 'Animator() {');
+        lines.push('  return new NeonAO.SpriteAnimator(' + safeIdent + '_FRAMES, ' + safeIdent + '_FRAME_DURATION, ' + safeIdent + '_LOOP);');
+        lines.push('}');
+        lines.push('// Exemplo no loop do jogo: animator.update(dt); gfx.drawSprite(animator.getCurrentSprite(), x, y);');
+      }
+
+      return lines.join('\n') + '\n';
+    },
+
+    exportJSFile: function (model) {
+      var code = Storage.generateNeonAOJSCode(model);
+      var fileName = sanitizeFileName(model.name, 'sprite') + '.js';
+      var blob = new Blob([code], { type: 'application/javascript;charset=utf-8' });
+      triggerBlobDownload(blob, fileName);
+      return { fileName: fileName, code: code };
+    }
+  };
+
+  AOprite.Storage = Storage;
+
+  /* ==========================================================================
+     6. MÓDULO DE RENDERIZAÇÃO PIXEL-PERFECT (CANVAS PRINCIPAL + MINIATURAS + LAÇO)
+     ========================================================================== */
+  function CanvasRenderer(canvas, viewportEl) {
+    this.canvas = canvas;
+    this.viewportEl = viewportEl;
+    this.ctx = canvas.getContext('2d', { alpha: false });
+    this.showGrid = true;
+    this.zoomMultiplier = 1; // 1 = Ajuste automático (FIT), >1 = ampliação extra
+    this.pixelScale = 16;
+    this.hoverX = -1;
+    this.hoverY = -1;
+    this.lassoPath = null;      // Array de pontos enquanto o usuário desenha o contorno
+    this.lassoSelection = null; // Região ativa selecionada pelo Laço
+  }
+
+  CanvasRenderer.prototype.computeScale = function (model) {
+    var vw = this.viewportEl ? this.viewportEl.clientWidth - 10 : 240;
+    var vh = this.viewportEl ? this.viewportEl.clientHeight - 10 : 240;
+    vw = Math.max(48, vw);
+    vh = Math.max(48, vh);
+
+    var fitScaleX = Math.floor(vw / model.width);
+    var fitScaleY = Math.floor(vh / model.height);
+    var baseScale = Math.max(2, Math.min(fitScaleX, fitScaleY));
+
+    var finalScale = Math.max(2, Math.min(64, Math.round(baseScale * this.zoomMultiplier)));
+    this.pixelScale = finalScale;
+
+    var displayW = model.width * finalScale;
+    var displayH = model.height * finalScale;
+
+    if (this.canvas.width !== displayW || this.canvas.height !== displayH) {
+      this.canvas.width = displayW;
+      this.canvas.height = displayH;
+      this.canvas.style.width = displayW + 'px';
+      this.canvas.style.height = displayH + 'px';
+    }
+
+    this.ctx.imageSmoothingEnabled = false;
+  };
+
+  CanvasRenderer.prototype.render = function (model) {
+    if (!this.ctx || !model) return;
+    this.computeScale(model);
+
+    var ctx = this.ctx;
+    var w = model.width;
+    var h = model.height;
+    var scale = this.pixelScale;
+    var halfScale = Math.max(2, Math.floor(scale / 2));
+
+    // 1. Renderiza fundo quadriculado (indicador visual de transparência) e pixels pintados
+    for (var y = 0; y < h; y++) {
+      var py = y * scale;
+      for (var x = 0; x < w; x++) {
+        var px = x * scale;
+        var colorIdx = model.pixels[y * w + x];
+
+        if (colorIdx >= 0 && colorIdx <= 15) {
+          ctx.fillStyle = PALETTE_ENTRIES[colorIdx].hex;
+          ctx.fillRect(px, py, scale, scale);
+        } else {
+          var isEvenCell = ((x + y) % 2 === 0);
+          ctx.fillStyle = isEvenCell ? '#1b1f2a' : '#252a38';
+          ctx.fillRect(px, py, scale, scale);
+
+          if (scale >= 8) {
+            ctx.fillStyle = isEvenCell ? '#222736' : '#1b1f2a';
+            ctx.fillRect(px + halfScale, py, scale - halfScale, halfScale);
+            ctx.fillRect(px, py + halfScale, halfScale, scale - halfScale);
+          }
+        }
+      }
+    }
+
+    // 2. Linhas opcionais da grade (1px nítido)
+    if (this.showGrid && scale >= 5) {
+      ctx.fillStyle = 'rgba(255, 241, 232, 0.14)';
+      for (var gx = 1; gx < w; gx++) {
+        ctx.fillRect(gx * scale, 0, 1, h * scale);
+      }
+      for (var gy = 1; gy < h; gy++) {
+        ctx.fillRect(0, gy * scale, w * scale, 1);
+      }
+
+      if (w % 2 === 0 && h % 2 === 0 && w >= 8 && h >= 8) {
+        ctx.fillStyle = 'rgba(41, 173, 255, 0.28)';
+        ctx.fillRect((w / 2) * scale, 0, 1, h * scale);
+        ctx.fillRect(0, (h / 2) * scale, w * scale, 1);
+      }
+    }
+
+    // 3. Etapa 2: Destaque visual da região selecionada pelo LAÇO
+    if (this.lassoSelection) {
+      var sel = this.lassoSelection;
+      ctx.fillStyle = 'rgba(41, 173, 255, 0.22)';
+      ctx.strokeStyle = '#ffec27';
+      ctx.lineWidth = 1;
+
+      for (var ly = 0; ly < sel.height; ly++) {
+        var sgy = sel.y + ly;
+        if (sgy < 0 || sgy >= h) continue;
+        for (var lx = 0; lx < sel.width; lx++) {
+          var sgx = sel.x + lx;
+          if (sgx < 0 || sgx >= w) continue;
+          if (sel.localMask[ly * sel.width + lx] === 1) {
+            var spx = sgx * scale;
+            var spy = sgy * scale;
+            ctx.fillRect(spx, spy, scale, scale);
+            ctx.strokeRect(spx + 0.5, spy + 0.5, Math.max(1, scale - 1), Math.max(1, scale - 1));
+          }
+        }
+      }
+
+      // Contorno delimitador da seleção ativa
+      var bx = Math.max(0, sel.x) * scale;
+      var by = Math.max(0, sel.y) * scale;
+      var bw = Math.min(w - sel.x, sel.width) * scale;
+      var bh = Math.min(h - sel.y, sel.height) * scale;
+      if (bw > 0 && bh > 0) {
+        ctx.save();
+        ctx.strokeStyle = '#29adff';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([4, 3]);
+        ctx.strokeRect(bx + 1, by + 1, Math.max(1, bw - 2), Math.max(1, bh - 2));
+        ctx.restore();
+      }
+    }
+
+    // 4. Etapa 2: Contorno livre em andamento enquanto o usuário desenha com o LAÇO
+    if (Array.isArray(this.lassoPath) && this.lassoPath.length > 0) {
+      ctx.fillStyle = 'rgba(255, 236, 39, 0.45)';
+      for (var p = 0; p < this.lassoPath.length; p++) {
+        var pt = this.lassoPath[p];
+        if (pt.x >= 0 && pt.x < w && pt.y >= 0 && pt.y < h) {
+          ctx.fillRect(pt.x * scale, pt.y * scale, scale, scale);
+        }
+      }
+    }
+
+    // 5. Destaque do pixel sob o ponteiro/dedo
+    if (this.hoverX >= 0 && this.hoverX < w && this.hoverY >= 0 && this.hoverY < h) {
+      var hx = this.hoverX * scale;
+      var hy = this.hoverY * scale;
+      ctx.strokeStyle = '#ffec27';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(hx + 0.5, hy + 0.5, scale - 1, scale - 1);
+    }
+  };
+
+  /**
+   * Renderiza miniatura pixel-perfect de um quadro na timeline.
+   */
+  CanvasRenderer.prototype.renderThumbnail = function (thumbCanvas, pixels, width, height) {
+    if (!thumbCanvas) return;
+    thumbCanvas.width = width;
+    thumbCanvas.height = height;
+    var tCtx = thumbCanvas.getContext('2d');
+    if (!tCtx) return;
+    tCtx.imageSmoothingEnabled = false;
+
+    for (var y = 0; y < height; y++) {
+      for (var x = 0; x < width; x++) {
+        var c = pixels[y * width + x];
+        if (c >= 0 && c <= 15) {
+          tCtx.fillStyle = PALETTE_ENTRIES[c].hex;
+        } else {
+          tCtx.fillStyle = ((x + y) % 2 === 0) ? '#1b1f2a' : '#252a38';
+        }
+        tCtx.fillRect(x, y, 1, 1);
+      }
+    }
+  };
+
+  /**
+   * Converte coordenadas da tela (clientX, clientY) para coordenadas do pixel (0..width-1, 0..height-1).
+   */
+  CanvasRenderer.prototype.clientToGrid = function (clientX, clientY, model) {
+    var rect = this.canvas.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) return null;
+    var relX = clientX - rect.left;
+    var relY = clientY - rect.top;
+    var gx = Math.floor((relX / rect.width) * model.width);
+    var gy = Math.floor((relY / rect.height) * model.height);
+    if (gx < 0 || gx >= model.width || gy < 0 || gy >= model.height) {
+      return null;
+    }
+    return { x: gx, y: gy };
+  };
+
+  AOprite.Renderer = CanvasRenderer;
+
+  /* ==========================================================================
+     7. CONTROLADOR DE INTERFACE, TIMELINE, SELEÇÃO (LAÇO) E EXPORTAÇÕES
+     ========================================================================== */
+  function EditorController() {
+    this.model = new SpriteModel(16, 16, 'Novo Sprite');
+    this.history = new HistoryManager(60);
+    this.activeTool = 'pencil'; // 'pencil' | 'eraser' | 'fill' | 'eyedropper' | 'lasso'
+    this.selectedColor = 7;     // Cor inicial: 7 (#FF004D)
+    this.isDrawing = false;
+    this.lastDrawPt = null;
+    this.strokeModified = false;
+    this.toastTimer = null;
+    this.isFullscreen = false;
+    this.fullscreenFallback = false;
+
+    // Estado da animação (Etapa 2)
+    this.isPlaying = false;
+    this.playTimer = null;
+
+    // Estado da ferramenta Laço (Etapa 2)
+    this.lassoMode = 'idle'; // 'idle' | 'contouring' | 'dragging'
+    this.lassoRawPoints = [];
+    this.lassoSelection = null;
+    this.lassoClipboard = null;
+    this.lassoDragStartPt = null;
+    this.lassoDragOrigin = null;
+    this.lassoBasePixels = null;
+    this.lassoPreMoveSnapshot = null;
+    this.lassoMoveRecorded = false;
+
+    // Estado PWA e Offline (Etapa 3)
+    this.deferredInstallPrompt = null;
+    this.swStatus = 'Verificando...';
+
+    this.dom = {};
+    this.renderer = null;
+  }
+
+  EditorController.prototype.init = function () {
+    this.dom = {
+      shell: document.getElementById('aop-shell'),
+      canvas: document.getElementById('aop-canvas'),
+      viewport: document.getElementById('aop-canvas-viewport'),
+      gridBadge: document.getElementById('aop-grid-size-badge'),
+      projectNameDisplay: document.getElementById('aop-project-name-display'),
+      activeSwatch: document.getElementById('aop-active-color-swatch'),
+      activeColorIndex: document.getElementById('aop-active-color-index'),
+      activeColorHex: document.getElementById('aop-active-color-hex'),
+      cursorCoords: document.getElementById('aop-cursor-coords'),
+      btnToggleGrid: document.getElementById('btn-toggle-grid'),
+      btnZoomOut: document.getElementById('btn-zoom-out'),
+      btnZoomFit: document.getElementById('btn-zoom-fit'),
+      btnZoomIn: document.getElementById('btn-zoom-in'),
+      zoomDisplay: document.getElementById('aop-zoom-display'),
+      btnUndo: document.getElementById('btn-undo'),
+      btnRedo: document.getElementById('btn-redo'),
+      btnClear: document.getElementById('btn-clear-canvas'),
+      paletteGrid: document.getElementById('aop-palette-grid'),
+      toolButtons: document.querySelectorAll('[data-tool-id]'),
+
+      // Barra Contextual do Laço
+      lassoBar: document.getElementById('aop-lasso-bar'),
+      lassoStatus: document.getElementById('aop-lasso-status'),
+      btnLassoCopy: document.getElementById('btn-lasso-copy'),
+      btnLassoCut: document.getElementById('btn-lasso-cut'),
+      btnLassoPaste: document.getElementById('btn-lasso-paste'),
+      btnLassoCancel: document.getElementById('btn-lasso-cancel'),
+
+      // Timeline de Animação
+      timelineBar: document.getElementById('aop-timeline-bar'),
+      btnAnimPlay: document.getElementById('btn-anim-play'),
+      btnFpsDown: document.getElementById('btn-fps-down'),
+      fpsDisplay: document.getElementById('aop-fps-display'),
+      btnFpsUp: document.getElementById('btn-fps-up'),
+      btnAnimLoop: document.getElementById('btn-anim-loop'),
+      framesStrip: document.getElementById('aop-frames-strip'),
+      btnFrameAdd: document.getElementById('btn-frame-add'),
+      btnFrameDup: document.getElementById('btn-frame-dup'),
+      btnFrameLeft: document.getElementById('btn-frame-left'),
+      btnFrameRight: document.getElementById('btn-frame-right'),
+      btnFrameDel: document.getElementById('btn-frame-del'),
+
+      // Controle de Tela Cheia e PWA
+      btnFullscreen: document.getElementById('btn-fullscreen'),
+      fullscreenLabel: document.getElementById('aop-fullscreen-label'),
+      fullscreenIconPath: document.getElementById('aop-fullscreen-icon-path'),
+      btnPwaInstall: document.getElementById('btn-pwa-install'),
+      btnOpenPwaFromProjects: document.getElementById('btn-open-pwa-from-projects'),
+      modalPwaInstall: document.getElementById('modal-pwa-install'),
+      btnClosePwaModal: document.getElementById('btn-close-pwa-modal'),
+      btnTriggerPwaPrompt: document.getElementById('btn-trigger-pwa-prompt'),
+      pwaModeStatus: document.getElementById('aop-pwa-mode-status'),
+      pwaSwStatus: document.getElementById('aop-pwa-sw-status'),
+      pwaNetStatus: document.getElementById('aop-pwa-net-status'),
+
+      // Modal Novo / Grade
+      btnOpenNewModal: document.getElementById('btn-open-new-modal'),
+      modalNew: document.getElementById('modal-new-project'),
+      btnCloseNewModal: document.getElementById('btn-close-new-modal'),
+      inputNewName: document.getElementById('input-new-project-name'),
+      inputGridW: document.getElementById('input-grid-width'),
+      inputGridH: document.getElementById('input-grid-height'),
+      presetButtons: document.querySelectorAll('.aop-preset-btn'),
+      btnResizeKeep: document.getElementById('btn-resize-keep'),
+      btnCreateBlank: document.getElementById('btn-create-blank'),
+
+      // Modal Projetos / .AOP / Exportações
+      btnQuickSave: document.getElementById('btn-quick-save'),
+      btnOpenProjectsModal: document.getElementById('btn-open-projects-modal'),
+      modalProjects: document.getElementById('modal-projects'),
+      btnCloseProjectsModal: document.getElementById('btn-close-projects-modal'),
+      inputSaveName: document.getElementById('input-save-project-name'),
+      btnSaveInModal: document.getElementById('btn-save-in-modal'),
+      btnExportAop: document.getElementById('btn-export-aop'),
+      btnTriggerImportAop: document.getElementById('btn-trigger-import-aop'),
+      inputImportFile: document.getElementById('input-import-aop-file'),
+      btnExportPng: document.getElementById('btn-export-png'),
+      btnExportGif: document.getElementById('btn-export-gif'),
+      btnExportJson: document.getElementById('btn-export-json'),
+      btnTriggerImportJson: document.getElementById('btn-trigger-import-json'),
+      inputImportJsonFile: document.getElementById('input-import-json-file'),
+      btnExportJs: document.getElementById('btn-export-js'),
+      savedProjectsList: document.getElementById('aop-saved-projects-list'),
+
+      toast: document.getElementById('aop-toast')
+    };
+
+    this.renderer = new CanvasRenderer(this.dom.canvas, this.dom.viewport);
+
+    this._buildPaletteButtons();
+    this._bindCanvasEvents();
+    this._bindToolbarEvents();
+    this._bindLassoEvents();
+    this._bindTimelineEvents();
+    this._bindModalEvents();
+    this._bindLayoutEvents();
+    this._initPWA();
+
+    // Restaura último estado salvo localmente no dispositivo se existir
+    var restored = Storage.loadWorkingState();
+    if (restored && restored.model) {
+      this.model = restored.model;
+      if (typeof restored.metadata.selectedColor === 'number' &&
+          restored.metadata.selectedColor >= 0 &&
+          restored.metadata.selectedColor <= 15) {
+        this.selectedColor = restored.metadata.selectedColor;
+      }
+      if (typeof restored.metadata.showGrid === 'boolean') {
+        this.renderer.showGrid = restored.metadata.showGrid;
+      }
+    }
+
+    this.history.setContext(this.model.getActiveFrame().id);
+    this.updateOrientation();
+    this.syncUI();
+    this.renderer.render(this.model);
+
+    root.aopriteInstance = this;
+    AOprite.controller = this;
+  };
+
+  EditorController.prototype.showToast = function (msg) {
+    if (!this.dom.toast) return;
+    this.dom.toast.textContent = msg;
+    this.dom.toast.hidden = false;
+    if (this.toastTimer) clearTimeout(this.toastTimer);
+    var self = this;
+    this.toastTimer = setTimeout(function () {
+      self.dom.toast.hidden = true;
+    }, 2200);
+  };
+
+  EditorController.prototype._buildPaletteButtons = function () {
+    var self = this;
+    var container = this.dom.paletteGrid;
+    if (!container) return;
+    container.innerHTML = '';
+
+    for (var i = 0; i < PALETTE_ENTRIES.length; i++) {
+      (function (entry) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'aop-swatch-btn';
+        btn.style.backgroundColor = entry.hex;
+        btn.setAttribute('data-color-index', String(entry.index));
+        btn.setAttribute('data-color-char', entry.char);
+        btn.setAttribute('aria-label', 'Cor ' + entry.char + ' (' + entry.hex + ')');
+        btn.setAttribute('aria-pressed', entry.index === self.selectedColor ? 'true' : 'false');
+
+        var tag = document.createElement('span');
+        tag.className = 'aop-swatch-index';
+        tag.textContent = entry.char;
+        btn.appendChild(tag);
+
+        btn.addEventListener('click', function () {
+          self.selectColor(entry.index);
+        });
+
+        container.appendChild(btn);
+      })(PALETTE_ENTRIES[i]);
+    }
+  };
+
+  EditorController.prototype.selectColor = function (colorIndex) {
+    if (!Number.isInteger(colorIndex) || colorIndex < 0 || colorIndex > 15) return;
+    this.selectedColor = colorIndex;
+    if (this.activeTool === 'eraser' || this.activeTool === 'eyedropper') {
+      this.activeTool = 'pencil';
+    }
+    this.syncUI();
+    this._autoSave();
+  };
+
+  EditorController.prototype.selectTool = function (toolId) {
+    if (toolId !== 'lasso' && this.lassoSelection) {
+      this.cancelLassoSelection(true);
+    }
+    this.activeTool = toolId;
+    this.syncUI();
+    this.renderer.render(this.model);
+  };
+
+  EditorController.prototype._autoSave = function () {
+    Storage.saveWorkingState(this.model, {
+      selectedColor: this.selectedColor,
+      showGrid: this.renderer.showGrid
+    });
+  };
+
+  /* ==========================================================================
+     ETAPA 2: CONTROLE DA FERRAMENTA DE SELEÇÃO LIVRE (LAÇO)
+     ========================================================================== */
+  EditorController.prototype.cancelLassoSelection = function (silent) {
+    this.lassoMode = 'idle';
+    this.lassoRawPoints = [];
+    this.lassoSelection = null;
+    this.lassoDragStartPt = null;
+    this.lassoDragOrigin = null;
+    this.lassoBasePixels = null;
+    this.lassoPreMoveSnapshot = null;
+    this.lassoMoveRecorded = false;
+    if (this.renderer) {
+      this.renderer.lassoPath = null;
+      this.renderer.lassoSelection = null;
+      this.renderer.render(this.model);
+    }
+    this.syncUI();
+    if (!silent) {
+      this.showToast('Seleção cancelada');
+    }
+  };
+
+  EditorController.prototype.copyLasso = function () {
+    if (!this.lassoSelection) return false;
+    this.lassoClipboard = Tools.copyLassoSelection(this.lassoSelection);
+    this.syncUI();
+    this.showToast('Seleção copiada (' + this.lassoClipboard.width + '×' + this.lassoClipboard.height + ')');
+    return true;
+  };
+
+  EditorController.prototype.cutLasso = function () {
+    if (!this.lassoSelection) return false;
+    this.pauseAnimation();
+    this.history.record(this.model.clonePixels());
+    this.lassoClipboard = Tools.copyLassoSelection(this.lassoSelection);
+    if (this.lassoBasePixels) {
+      this.model.replacePixels(this.lassoBasePixels);
+    } else {
+      Tools.clearSelectedPixelsFromGrid(
+        this.model.pixels,
+        this.model.width,
+        this.model.height,
+        this.lassoSelection
+      );
+      this.model.updatedAt = new Date().toISOString();
+    }
+    this.cancelLassoSelection(true);
+    this._autoSave();
+    this.showToast('Seleção cortada');
+    return true;
+  };
+
+  EditorController.prototype.pasteLasso = function (destX, destY) {
+    if (!this.lassoClipboard) return false;
+    this.pauseAnimation();
+    this.activeTool = 'lasso';
+    this.history.record(this.model.clonePixels());
+    var ox = typeof destX === 'number' ? Math.floor(destX) : 0;
+    var oy = typeof destY === 'number' ? Math.floor(destY) : 0;
+    var baseBeforePaste = this.model.clonePixels();
+    var pastedRegion = Tools.pasteLassoClipboard(
+      this.model.pixels,
+      this.model.width,
+      this.model.height,
+      this.lassoClipboard,
+      ox,
+      oy
+    );
+    this.model.updatedAt = new Date().toISOString();
+    this.lassoSelection = pastedRegion;
+    // Permite mover a seleção recém-colada imediatamente sem recortar os pixels de fundo
+    this.lassoBasePixels = baseBeforePaste;
+    this.lassoMoveRecorded = true;
+    this.renderer.lassoSelection = this.lassoSelection;
+    this.renderer.render(this.model);
+    this.syncUI();
+    this._autoSave();
+    this.showToast('Seleção colada — arraste para posicionar');
+    return true;
+  };
+
+  EditorController.prototype._bindLassoEvents = function () {
+    var self = this;
+    if (this.dom.btnLassoCopy) {
+      this.dom.btnLassoCopy.addEventListener('click', function () {
+        self.copyLasso();
+      });
+    }
+    if (this.dom.btnLassoCut) {
+      this.dom.btnLassoCut.addEventListener('click', function () {
+        self.cutLasso();
+      });
+    }
+    if (this.dom.btnLassoPaste) {
+      this.dom.btnLassoPaste.addEventListener('click', function () {
+        self.pasteLasso(0, 0);
+      });
+    }
+    if (this.dom.btnLassoCancel) {
+      this.dom.btnLassoCancel.addEventListener('click', function () {
+        self.cancelLassoSelection(false);
+      });
+    }
+  };
+
+  /* ==========================================================================
+     ETAPA 2: CONTROLE DA TIMELINE E REPRODUÇÃO DE ANIMAÇÕES
+     ========================================================================== */
+  EditorController.prototype.playAnimation = function () {
+    var self = this;
+    if (this.isPlaying) return;
+    if (this.lassoSelection) {
+      this.cancelLassoSelection(true);
+    }
+    this.isPlaying = true;
+    this._scheduleNextAnimationTick();
+    this.syncUI();
+  };
+
+  EditorController.prototype.pauseAnimation = function () {
+    if (!this.isPlaying && !this.playTimer) return;
+    this.isPlaying = false;
+    if (this.playTimer) {
+      clearTimeout(this.playTimer);
+      this.playTimer = null;
+    }
+    this.syncUI();
+  };
+
+  EditorController.prototype.toggleAnimationPlayback = function () {
+    if (this.isPlaying) {
+      this.pauseAnimation();
+    } else {
+      this.playAnimation();
+    }
+  };
+
+  EditorController.prototype._scheduleNextAnimationTick = function () {
+    var self = this;
+    if (this.playTimer) clearTimeout(this.playTimer);
+    if (!this.isPlaying) return;
+
+    var intervalMs = Math.max(40, Math.round(1000 / clampFPS(this.model.fps, 8)));
+    this.playTimer = setTimeout(function () {
+      if (!self.isPlaying) return;
+      var total = self.model.frames.length;
+      if (total > 1) {
+        var nextIdx = self.model.activeFrameIndex + 1;
+        if (nextIdx >= total) {
+          if (self.model.loop) {
+            nextIdx = 0;
+          } else {
+            self.pauseAnimation();
+            return;
+          }
+        }
+        self.selectFrame(nextIdx, true);
+      }
+      if (self.isPlaying) {
+        self._scheduleNextAnimationTick();
+      }
+    }, intervalMs);
+  };
+
+  EditorController.prototype.selectFrame = function (index, fromPlayback) {
+    if (!fromPlayback && this.lassoSelection) {
+      this.cancelLassoSelection(true);
+    }
+    if (!this.model.selectFrame(index)) return false;
+    this.history.setContext(this.model.getActiveFrame().id);
+    this.renderer.render(this.model);
+    this.syncUI();
+    if (!fromPlayback) {
+      this._autoSave();
+    }
+    return true;
+  };
+
+  EditorController.prototype.addFrame = function () {
+    this.pauseAnimation();
+    if (this.lassoSelection) this.cancelLassoSelection(true);
+    var idx = this.model.addFrame();
+    this.history.setContext(this.model.getActiveFrame().id);
+    this.renderer.render(this.model);
+    this.syncUI();
+    this._autoSave();
+    this.showToast('Quadro #' + (idx + 1) + ' adicionado');
+    return idx;
+  };
+
+  EditorController.prototype.duplicateFrame = function () {
+    this.pauseAnimation();
+    if (this.lassoSelection) this.cancelLassoSelection(true);
+    var idx = this.model.duplicateFrame();
+    this.history.setContext(this.model.getActiveFrame().id);
+    this.renderer.render(this.model);
+    this.syncUI();
+    this._autoSave();
+    this.showToast('Quadro duplicado para #' + (idx + 1));
+    return idx;
+  };
+
+  EditorController.prototype.removeFrame = function () {
+    this.pauseAnimation();
+    if (this.lassoSelection) this.cancelLassoSelection(true);
+    if (this.model.frames.length <= 1) {
+      this.showToast('A animação precisa ter pelo menos 1 quadro');
+      return false;
+    }
+    var removedFrameId = this.model.getActiveFrame().id;
+    var ok = this.model.removeFrame();
+    if (ok) {
+      this.history.clear(removedFrameId);
+      this.history.setContext(this.model.getActiveFrame().id);
+      this.renderer.render(this.model);
+      this.syncUI();
+      this._autoSave();
+      this.showToast('Quadro removido');
+    }
+    return ok;
+  };
+
+  EditorController.prototype.moveFrame = function (direction) {
+    this.pauseAnimation();
+    if (this.lassoSelection) this.cancelLassoSelection(true);
+    var from = this.model.activeFrameIndex;
+    var to = from + direction;
+    if (!this.model.moveFrame(from, to)) return false;
+    this.history.setContext(this.model.getActiveFrame().id);
+    this.renderer.render(this.model);
+    this.syncUI();
+    this._autoSave();
+    return true;
+  };
+
+  EditorController.prototype.changeFPS = function (delta) {
+    var nextFps = clampFPS(this.model.fps + delta, this.model.fps);
+    this.model.setFPS(nextFps);
+    if (this.isPlaying) {
+      this._scheduleNextAnimationTick();
+    }
+    this.syncUI();
+    this._autoSave();
+    return nextFps;
+  };
+
+  EditorController.prototype.toggleLoop = function () {
+    this.model.setLoop(!this.model.loop);
+    this.syncUI();
+    this._autoSave();
+    return this.model.loop;
+  };
+
+  EditorController.prototype._bindTimelineEvents = function () {
+    var self = this;
+
+    if (this.dom.btnAnimPlay) {
+      this.dom.btnAnimPlay.addEventListener('click', function () {
+        self.toggleAnimationPlayback();
+      });
+    }
+    if (this.dom.btnFpsDown) {
+      this.dom.btnFpsDown.addEventListener('click', function () {
+        self.changeFPS(-1);
+      });
+    }
+    if (this.dom.btnFpsUp) {
+      this.dom.btnFpsUp.addEventListener('click', function () {
+        self.changeFPS(1);
+      });
+    }
+    if (this.dom.btnAnimLoop) {
+      this.dom.btnAnimLoop.addEventListener('click', function () {
+        self.toggleLoop();
+      });
+    }
+    if (this.dom.btnFrameAdd) {
+      this.dom.btnFrameAdd.addEventListener('click', function () {
+        self.addFrame();
+      });
+    }
+    if (this.dom.btnFrameDup) {
+      this.dom.btnFrameDup.addEventListener('click', function () {
+        self.duplicateFrame();
+      });
+    }
+    if (this.dom.btnFrameLeft) {
+      this.dom.btnFrameLeft.addEventListener('click', function () {
+        self.moveFrame(-1);
+      });
+    }
+    if (this.dom.btnFrameRight) {
+      this.dom.btnFrameRight.addEventListener('click', function () {
+        self.moveFrame(1);
+      });
+    }
+    if (this.dom.btnFrameDel) {
+      this.dom.btnFrameDel.addEventListener('click', function () {
+        self.removeFrame();
+      });
+    }
+  };
+
+  EditorController.prototype._renderTimelineStrip = function () {
+    var self = this;
+    var strip = this.dom.framesStrip;
+    if (!strip) return;
+
+    var frames = this.model.frames;
+    if (strip.children.length === frames.length) {
+      for (var k = 0; k < frames.length; k++) {
+        var existingBtn = strip.children[k];
+        var selected = (k === this.model.activeFrameIndex);
+        existingBtn.setAttribute('aria-selected', selected ? 'true' : 'false');
+        var existingThumb = existingBtn.querySelector('.aop-frame-thumb');
+        if (existingThumb) {
+          this.renderer.renderThumbnail(existingThumb, frames[k].pixels, this.model.width, this.model.height);
+        }
+      }
+      return;
+    }
+
+    strip.innerHTML = '';
+    for (var i = 0; i < frames.length; i++) {
+      (function (idx, frameObj) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'aop-frame-item';
+        btn.setAttribute('role', 'option');
+        btn.setAttribute('data-frame-index', String(idx));
+        var isSelected = (idx === self.model.activeFrameIndex);
+        btn.setAttribute('aria-selected', isSelected ? 'true' : 'false');
+        btn.setAttribute('aria-label', 'Quadro ' + (idx + 1));
+
+        var thumb = document.createElement('canvas');
+        thumb.className = 'aop-frame-thumb';
+        self.renderer.renderThumbnail(thumb, frameObj.pixels, self.model.width, self.model.height);
+
+        var num = document.createElement('span');
+        num.className = 'aop-frame-num';
+        num.textContent = '#' + (idx + 1);
+
+        btn.appendChild(thumb);
+        btn.appendChild(num);
+
+        btn.addEventListener('click', function () {
+          self.pauseAnimation();
+          self.selectFrame(idx, false);
+        });
+
+        strip.appendChild(btn);
+      })(i, frames[i]);
+    }
+  };
+
+  /* ==========================================================================
+     EVENTOS DE DESENHO E LAÇO NO CANVAS (TOUCH, POINTER E MOUSE)
+     ========================================================================== */
+  EditorController.prototype._bindCanvasEvents = function () {
+    var self = this;
+    var canvas = this.dom.canvas;
+    if (!canvas) return;
+
+    function handleStart(clientX, clientY) {
+      var pt = self.renderer.clientToGrid(clientX, clientY, self.model);
+      if (!pt) return;
+
+      self.pauseAnimation();
+      self.renderer.hoverX = pt.x;
+      self.renderer.hoverY = pt.y;
+      self._updateCoordsDisplay(pt.x, pt.y);
+
+      // Etapa 2: Ferramenta de Seleção Livre (LAÇO)
+      if (self.activeTool === 'lasso') {
+        if (self.lassoSelection && Tools.isPointInSelection(self.lassoSelection, pt.x, pt.y)) {
+          // Iniciar arraste para mover a região selecionada
+          self.lassoMode = 'dragging';
+          self.lassoDragStartPt = { x: pt.x, y: pt.y };
+          self.lassoDragOrigin = { x: self.lassoSelection.x, y: self.lassoSelection.y };
+          if (!self.lassoBasePixels) {
+            self.lassoPreMoveSnapshot = self.model.clonePixels();
+            var lifted = self.model.clonePixels();
+            Tools.clearSelectedPixelsFromGrid(lifted, self.model.width, self.model.height, self.lassoSelection);
+            self.lassoBasePixels = lifted;
+          }
+          self.isDrawing = true;
+          return;
+        }
+
+        // Iniciar novo contorno de seleção livre
+        self.lassoSelection = null;
+        self.lassoBasePixels = null;
+        self.lassoPreMoveSnapshot = null;
+        self.lassoMoveRecorded = false;
+        self.lassoMode = 'contouring';
+        self.lassoRawPoints = [{ x: pt.x, y: pt.y }];
+        self.renderer.lassoSelection = null;
+        self.renderer.lassoPath = self.lassoRawPoints.slice();
+        self.isDrawing = true;
+        self.syncUI();
+        self.renderer.render(self.model);
+        return;
+      }
+
+      if (self.activeTool === 'eyedropper') {
+        var sampled = Tools.samplePixel(self.model, pt.x, pt.y);
+        if (sampled >= 0 && sampled <= 15) {
+          self.selectedColor = sampled;
+          self.activeTool = 'pencil';
+          self.syncUI();
+          self.showToast('Cor ' + Palette.indexToChar(sampled) + ' (' + Palette.getHex(sampled) + ') selecionada');
+        } else {
+          self.activeTool = 'eraser';
+          self.syncUI();
+          self.showToast('Pixel transparente (.) — Borracha ativada');
+        }
+        self.renderer.render(self.model);
+        return;
+      }
+
+      if (self.activeTool === 'fill') {
+        var snapshotFill = self.model.clonePixels();
+        var didFill = Tools.floodFill(self.model, pt.x, pt.y, self.selectedColor);
+        if (didFill) {
+          self.history.record(snapshotFill);
+          self.renderer.render(self.model);
+          self.syncUI();
+          self._autoSave();
+        }
+        return;
+      }
+
+      // Ferramentas de traço contínuo: Lápis ou Borracha
+      var snapshotStroke = self.model.clonePixels();
+      var paintColor = self.activeTool === 'eraser' ? -1 : self.selectedColor;
+      self.isDrawing = true;
+      self.lastDrawPt = pt;
+      self.strokeSnapshot = snapshotStroke;
+      self.strokeModified = self.model.setPixel(pt.x, pt.y, paintColor);
+      self.renderer.render(self.model);
+    }
+
+    function handleMove(clientX, clientY) {
+      var pt = self.renderer.clientToGrid(clientX, clientY, self.model);
+      if (pt) {
+        self.renderer.hoverX = pt.x;
+        self.renderer.hoverY = pt.y;
+        self._updateCoordsDisplay(pt.x, pt.y);
+      }
+
+      if (!self.isDrawing || !pt) {
+        if (pt) self.renderer.render(self.model);
+        return;
+      }
+
+      // Etapa 2: Movimento ou Contorno do Laço
+      if (self.activeTool === 'lasso') {
+        if (self.lassoMode === 'contouring') {
+          var lastPt = self.lassoRawPoints[self.lassoRawPoints.length - 1];
+          if (!lastPt || lastPt.x !== pt.x || lastPt.y !== pt.y) {
+            var interp = getBresenhamPoints(lastPt ? lastPt.x : pt.x, lastPt ? lastPt.y : pt.y, pt.x, pt.y);
+            for (var i = 0; i < interp.length; i++) {
+              self.lassoRawPoints.push(interp[i]);
+            }
+            self.renderer.lassoPath = self.lassoRawPoints;
+            self.renderer.render(self.model);
+          }
+          return;
+        }
+
+        if (self.lassoMode === 'dragging' && self.lassoSelection && self.lassoDragStartPt && self.lassoDragOrigin) {
+          var dx = pt.x - self.lassoDragStartPt.x;
+          var dy = pt.y - self.lassoDragStartPt.y;
+          var destX = self.lassoDragOrigin.x + dx;
+          var destY = self.lassoDragOrigin.y + dy;
+          if (destX !== self.lassoSelection.x || destY !== self.lassoSelection.y) {
+            if (!self.lassoMoveRecorded && self.lassoPreMoveSnapshot) {
+              self.history.record(self.lassoPreMoveSnapshot);
+              self.lassoMoveRecorded = true;
+            }
+            var baseGrid = self.lassoBasePixels || self.model.clonePixels();
+            var stamped = Tools.stampSelectionOntoGrid(
+              baseGrid,
+              self.model.width,
+              self.model.height,
+              self.lassoSelection,
+              destX,
+              destY
+            );
+            self.model.replacePixels(stamped);
+            self.lassoSelection.x = destX;
+            self.lassoSelection.y = destY;
+            self.renderer.lassoSelection = self.lassoSelection;
+            self.renderer.render(self.model);
+            self.syncUI();
+          }
+          return;
+        }
+        return;
+      }
+
+      var paintColor = self.activeTool === 'eraser' ? -1 : self.selectedColor;
+      var prev = self.lastDrawPt || pt;
+      var changed = Tools.drawContinuousStroke(self.model, prev.x, prev.y, pt.x, pt.y, paintColor);
+      if (changed) {
+        self.strokeModified = true;
+      }
+      self.lastDrawPt = pt;
+      self.renderer.render(self.model);
+    }
+
+    function handleEnd() {
+      if (!self.isDrawing) return;
+      self.isDrawing = false;
+
+      if (self.activeTool === 'lasso') {
+        if (self.lassoMode === 'contouring') {
+          self.lassoMode = 'idle';
+          self.renderer.lassoPath = null;
+          var region = Tools.createLassoSelection(
+            self.model.pixels,
+            self.model.width,
+            self.model.height,
+            self.lassoRawPoints
+          );
+          self.lassoRawPoints = [];
+          self.lassoSelection = region;
+          self.renderer.lassoSelection = region;
+          self.syncUI();
+          self.renderer.render(self.model);
+          return;
+        }
+
+        if (self.lassoMode === 'dragging') {
+          self.lassoMode = 'idle';
+          self.lassoDragStartPt = null;
+          self.lassoDragOrigin = null;
+          self.syncUI();
+          self.renderer.render(self.model);
+          self._autoSave();
+          return;
+        }
+      }
+
+      self.lastDrawPt = null;
+      if (self.strokeModified && self.strokeSnapshot) {
+        self.history.record(self.strokeSnapshot);
+        self.syncUI();
+        self._autoSave();
+      }
+      self.strokeSnapshot = null;
+      self.strokeModified = false;
+    }
+
+    if (window.PointerEvent) {
+      canvas.addEventListener('pointerdown', function (e) {
+        if (e.button !== undefined && e.button !== 0) return;
+        e.preventDefault();
+        if (canvas.setPointerCapture) {
+          try { canvas.setPointerCapture(e.pointerId); } catch (_err) {}
+        }
+        handleStart(e.clientX, e.clientY);
+      }, { passive: false });
+
+      canvas.addEventListener('pointermove', function (e) {
+        if (self.isDrawing) e.preventDefault();
+        handleMove(e.clientX, e.clientY);
+      }, { passive: false });
+
+      canvas.addEventListener('pointerup', function (e) {
+        e.preventDefault();
+        handleEnd();
+      }, { passive: false });
+
+      canvas.addEventListener('pointercancel', function () {
+        handleEnd();
+      });
+
+      canvas.addEventListener('pointerleave', function () {
+        if (!self.isDrawing) {
+          self.renderer.hoverX = -1;
+          self.renderer.hoverY = -1;
+          self._updateCoordsDisplay(-1, -1);
+          self.renderer.render(self.model);
+        }
+      });
+    } else {
+      canvas.addEventListener('touchstart', function (e) {
+        e.preventDefault();
+        if (e.touches && e.touches.length > 0) {
+          handleStart(e.touches[0].clientX, e.touches[0].clientY);
+        }
+      }, { passive: false });
+
+      canvas.addEventListener('touchmove', function (e) {
+        e.preventDefault();
+        if (e.touches && e.touches.length > 0) {
+          handleMove(e.touches[0].clientX, e.touches[0].clientY);
+        }
+      }, { passive: false });
+
+      canvas.addEventListener('touchend', function (e) {
+        e.preventDefault();
+        handleEnd();
+      }, { passive: false });
+
+      canvas.addEventListener('mousedown', function (e) {
+        if (e.button !== 0) return;
+        e.preventDefault();
+        handleStart(e.clientX, e.clientY);
+      });
+
+      window.addEventListener('mousemove', function (e) {
+        if (self.isDrawing || e.target === canvas) {
+          handleMove(e.clientX, e.clientY);
+        }
+      });
+
+      window.addEventListener('mouseup', function () {
+        handleEnd();
+      });
+    }
+  };
+
+  EditorController.prototype._updateCoordsDisplay = function (x, y) {
+    if (!this.dom.cursorCoords) return;
+    if (x < 0 || y < 0) {
+      this.dom.cursorCoords.textContent = 'X:- Y:-';
+    } else {
+      this.dom.cursorCoords.textContent = 'X:' + x + ' Y:' + y;
+    }
+  };
+
+  /* ==========================================================================
+     EVENTOS DA BARRA DE FERRAMENTAS, ZOOM, GRADE E HISTÓRICO
+     ========================================================================== */
+  EditorController.prototype._bindToolbarEvents = function () {
+    var self = this;
+
+    for (var i = 0; i < this.dom.toolButtons.length; i++) {
+      (function (btn) {
+        btn.addEventListener('click', function () {
+          var toolId = btn.getAttribute('data-tool-id');
+          if (toolId) self.selectTool(toolId);
+        });
+      })(this.dom.toolButtons[i]);
+    }
+
+    if (this.dom.btnUndo) {
+      this.dom.btnUndo.addEventListener('click', function () {
+        self.undo();
+      });
+    }
+
+    if (this.dom.btnRedo) {
+      this.dom.btnRedo.addEventListener('click', function () {
+        self.redo();
+      });
+    }
+
+    if (this.dom.btnClear) {
+      this.dom.btnClear.addEventListener('click', function () {
+        self.clearCanvas();
+      });
+    }
+
+    if (this.dom.btnToggleGrid) {
+      this.dom.btnToggleGrid.addEventListener('click', function () {
+        self.renderer.showGrid = !self.renderer.showGrid;
+        self.syncUI();
+        self.renderer.render(self.model);
+        self._autoSave();
+      });
+    }
+
+    if (this.dom.btnZoomIn) {
+      this.dom.btnZoomIn.addEventListener('click', function () {
+        self.renderer.zoomMultiplier = Math.min(4, +(self.renderer.zoomMultiplier + 0.25).toFixed(2));
+        self.syncUI();
+        self.renderer.render(self.model);
+      });
+    }
+
+    if (this.dom.btnZoomOut) {
+      this.dom.btnZoomOut.addEventListener('click', function () {
+        self.renderer.zoomMultiplier = Math.max(0.5, +(self.renderer.zoomMultiplier - 0.25).toFixed(2));
+        self.syncUI();
+        self.renderer.render(self.model);
+      });
+    }
+
+    if (this.dom.btnZoomFit) {
+      this.dom.btnZoomFit.addEventListener('click', function () {
+        self.renderer.zoomMultiplier = 1;
+        self.syncUI();
+        self.renderer.render(self.model);
+      });
+    }
+
+    window.addEventListener('keydown', function (e) {
+      if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+        e.preventDefault();
+        if (e.shiftKey) self.redo();
+        else self.undo();
+      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
+        e.preventDefault();
+        self.redo();
+      } else if (e.key === 'Escape' && self.lassoSelection) {
+        self.cancelLassoSelection(false);
+      }
+    });
+  };
+
+  EditorController.prototype.undo = function () {
+    this.pauseAnimation();
+    if (this.lassoSelection) this.cancelLassoSelection(true);
+    var prev = this.history.undo(this.model.pixels);
+    if (!prev) return false;
+    this.model.replacePixels(prev);
+    this.renderer.render(this.model);
+    this.syncUI();
+    this._autoSave();
+    return true;
+  };
+
+  EditorController.prototype.redo = function () {
+    this.pauseAnimation();
+    if (this.lassoSelection) this.cancelLassoSelection(true);
+    var next = this.history.redo(this.model.pixels);
+    if (!next) return false;
+    this.model.replacePixels(next);
+    this.renderer.render(this.model);
+    this.syncUI();
+    this._autoSave();
+    return true;
+  };
+
+  EditorController.prototype.clearCanvas = function () {
+    this.pauseAnimation();
+    if (this.lassoSelection) this.cancelLassoSelection(true);
+    var hasAnyPixel = this.model.pixels.some(function (p) { return p !== -1; });
+    if (!hasAnyPixel) return;
+    this.history.record(this.model.clonePixels());
+    this.model.clear();
+    this.renderer.render(this.model);
+    this.syncUI();
+    this._autoSave();
+    this.showToast('Quadro limpo');
+  };
+
+  /* ==========================================================================
+     EVENTOS DE MODAIS (GRADE, PROJETOS .AOP E EXPORTAÇÕES PNG, GIF, JSON, JS)
+     ========================================================================== */
+  EditorController.prototype._bindModalEvents = function () {
+    var self = this;
+
+    // Abrir Modal Novo / Grade
+    if (this.dom.btnOpenNewModal) {
+      this.dom.btnOpenNewModal.addEventListener('click', function () {
+        self.pauseAnimation();
+        self.dom.inputNewName.value = self.model.name;
+        self.dom.inputGridW.value = String(self.model.width);
+        self.dom.inputGridH.value = String(self.model.height);
+        self._highlightMatchingPreset(self.model.width, self.model.height);
+        self.dom.modalNew.hidden = false;
+      });
+    }
+
+    if (this.dom.btnCloseNewModal) {
+      this.dom.btnCloseNewModal.addEventListener('click', function () {
+        self.dom.modalNew.hidden = true;
+      });
+    }
+
+    for (var i = 0; i < this.dom.presetButtons.length; i++) {
+      (function (btn) {
+        btn.addEventListener('click', function () {
+          var pw = Number(btn.getAttribute('data-preset-w')) || 16;
+          var ph = Number(btn.getAttribute('data-preset-h')) || 16;
+          self.dom.inputGridW.value = String(pw);
+          self.dom.inputGridH.value = String(ph);
+          self._highlightMatchingPreset(pw, ph);
+        });
+      })(this.dom.presetButtons[i]);
+    }
+
+    function onCustomDimInput() {
+      var w = Number(self.dom.inputGridW.value);
+      var h = Number(self.dom.inputGridH.value);
+      self._highlightMatchingPreset(w, h);
+    }
+    this.dom.inputGridW.addEventListener('input', onCustomDimInput);
+    this.dom.inputGridH.addEventListener('input', onCustomDimInput);
+
+    // Redimensionar mantendo conteúdo de todos os quadros
+    if (this.dom.btnResizeKeep) {
+      this.dom.btnResizeKeep.addEventListener('click', function () {
+        var nw = clampDimension(self.dom.inputGridW.value, self.model.width);
+        var nh = clampDimension(self.dom.inputGridH.value, self.model.height);
+        var newName = (self.dom.inputNewName.value || '').trim() || self.model.name;
+        self.model.name = newName;
+        self.cancelLassoSelection(true);
+        self.history.clear();
+        self.model.resize(nw, nh, true);
+        self.history.setContext(self.model.getActiveFrame().id);
+        self.renderer.zoomMultiplier = 1;
+        self.dom.modalNew.hidden = true;
+        self.syncUI();
+        self.renderer.render(self.model);
+        self._autoSave();
+        self.showToast('Grade ajustada para ' + nw + '×' + nh);
+      });
+    }
+
+    // Criar novo projeto em branco
+    if (this.dom.btnCreateBlank) {
+      this.dom.btnCreateBlank.addEventListener('click', function () {
+        var nw = clampDimension(self.dom.inputGridW.value, 16);
+        var nh = clampDimension(self.dom.inputGridH.value, 16);
+        var newName = (self.dom.inputNewName.value || '').trim() || 'Novo Sprite';
+        self.createNewProject(nw, nh, newName);
+        self.dom.modalNew.hidden = true;
+        self.showToast('Novo projeto ' + nw + '×' + nh + ' criado');
+      });
+    }
+
+    // Botão Salvar Rápido no Cabeçalho
+    if (this.dom.btnQuickSave) {
+      this.dom.btnQuickSave.addEventListener('click', function () {
+        try {
+          Storage.saveProjectToDevice(self.model, {
+            selectedColor: self.selectedColor,
+            showGrid: self.renderer.showGrid
+          });
+          self.showToast('Projeto "' + self.model.name + '" salvo no dispositivo');
+        } catch (err) {
+          self.showToast(err.message || 'Erro ao salvar');
+        }
+      });
+    }
+
+    // Abrir Modal Projetos / .AOP / Exportações
+    if (this.dom.btnOpenProjectsModal) {
+      this.dom.btnOpenProjectsModal.addEventListener('click', function () {
+        self.pauseAnimation();
+        self.dom.inputSaveName.value = self.model.name;
+        self._renderSavedProjectsList();
+        self.dom.modalProjects.hidden = false;
+      });
+    }
+
+    if (this.dom.btnCloseProjectsModal) {
+      this.dom.btnCloseProjectsModal.addEventListener('click', function () {
+        self.dom.modalProjects.hidden = true;
+      });
+    }
+
+    if (this.dom.btnSaveInModal) {
+      this.dom.btnSaveInModal.addEventListener('click', function () {
+        var customName = (self.dom.inputSaveName.value || '').trim();
+        if (customName) {
+          self.model.name = customName;
+        }
+        try {
+          Storage.saveProjectToDevice(self.model, {
+            selectedColor: self.selectedColor,
+            showGrid: self.renderer.showGrid
+          });
+          self.syncUI();
+          self._renderSavedProjectsList();
+          self.showToast('Salvo na memória local');
+        } catch (err) {
+          self.showToast(err.message || 'Erro ao salvar');
+        }
+      });
+    }
+
+    // Exportar arquivo .aop
+    if (this.dom.btnExportAop) {
+      this.dom.btnExportAop.addEventListener('click', function () {
+        var customName = (self.dom.inputSaveName.value || '').trim();
+        if (customName) {
+          self.model.name = customName;
+          self.syncUI();
+        }
+        var result = Storage.exportAOPFile(self.model, {
+          selectedColor: self.selectedColor,
+          showGrid: self.renderer.showGrid
+        });
+        self.showToast('Exportado: ' + result.fileName);
+      });
+    }
+
+    // Importar arquivo .aop
+    if (this.dom.btnTriggerImportAop && this.dom.inputImportFile) {
+      this.dom.btnTriggerImportAop.addEventListener('click', function () {
+        self.dom.inputImportFile.value = '';
+        self.dom.inputImportFile.click();
+      });
+
+      this.dom.inputImportFile.addEventListener('change', function (e) {
+        var file = e.target.files && e.target.files[0];
+        if (!file) return;
+        var reader = new FileReader();
+        reader.onload = function (ev) {
+          try {
+            var content = String(ev.target.result || '');
+            self.importAOPString(content);
+            self.dom.modalProjects.hidden = true;
+            self.showToast('Projeto "' + self.model.name + '" importado');
+          } catch (err) {
+            self.showToast(err.message || 'Falha ao importar arquivo .aop');
+          }
+        };
+        reader.readAsText(file);
+      });
+    }
+
+    // Etapa 2: Exportar PNG estático do quadro atual
+    if (this.dom.btnExportPng) {
+      this.dom.btnExportPng.addEventListener('click', function () {
+        var customName = (self.dom.inputSaveName.value || '').trim();
+        if (customName) {
+          self.model.name = customName;
+          self.syncUI();
+        }
+        var res = Storage.exportPNGFile(self.model, self.model.activeFrameIndex);
+        self.showToast('PNG exportado: ' + res.fileName + ' (' + res.width + '×' + res.height + ')');
+      });
+    }
+
+    // Etapa 2: Exportar GIF89a animado da animação completa
+    if (this.dom.btnExportGif) {
+      this.dom.btnExportGif.addEventListener('click', function () {
+        var customName = (self.dom.inputSaveName.value || '').trim();
+        if (customName) {
+          self.model.name = customName;
+          self.syncUI();
+        }
+        var res = Storage.exportGIFFile(self.model);
+        self.showToast('GIF exportado: ' + res.fileName + ' (' + res.frameCount + ' quadros)');
+      });
+    }
+
+    // Etapa 2: Exportar JSON estruturado
+    if (this.dom.btnExportJson) {
+      this.dom.btnExportJson.addEventListener('click', function () {
+        var customName = (self.dom.inputSaveName.value || '').trim();
+        if (customName) {
+          self.model.name = customName;
+          self.syncUI();
+        }
+        var res = Storage.exportJSONFile(self.model);
+        self.showToast('JSON exportado: ' + res.fileName);
+      });
+    }
+
+    // Etapa 2: Importar JSON estruturado
+    if (this.dom.btnTriggerImportJson && this.dom.inputImportJsonFile) {
+      this.dom.btnTriggerImportJson.addEventListener('click', function () {
+        self.dom.inputImportJsonFile.value = '';
+        self.dom.inputImportJsonFile.click();
+      });
+
+      this.dom.inputImportJsonFile.addEventListener('change', function (e) {
+        var file = e.target.files && e.target.files[0];
+        if (!file) return;
+        var reader = new FileReader();
+        reader.onload = function (ev) {
+          try {
+            var content = String(ev.target.result || '');
+            self.importJSONString(content);
+            self.dom.modalProjects.hidden = true;
+            self.showToast('JSON "' + self.model.name + '" importado com sucesso');
+          } catch (err) {
+            self.showToast(err.message || 'Falha ao importar arquivo JSON');
+          }
+        };
+        reader.readAsText(file);
+      });
+    }
+
+    // Etapa 2: Exportar JS para integração com Neon-AO 1.0
+    if (this.dom.btnExportJs) {
+      this.dom.btnExportJs.addEventListener('click', function () {
+        var customName = (self.dom.inputSaveName.value || '').trim();
+        if (customName) {
+          self.model.name = customName;
+          self.syncUI();
+        }
+        var res = Storage.exportJSFile(self.model);
+        self.showToast('Código JS (Neon-AO) exportado: ' + res.fileName);
+      });
+    }
+  };
+
+  EditorController.prototype._highlightMatchingPreset = function (w, h) {
+    for (var i = 0; i < this.dom.presetButtons.length; i++) {
+      var btn = this.dom.presetButtons[i];
+      var pw = Number(btn.getAttribute('data-preset-w'));
+      var ph = Number(btn.getAttribute('data-preset-h'));
+      btn.setAttribute('data-selected', (pw === w && ph === h) ? 'true' : 'false');
+    }
+  };
+
+  EditorController.prototype.createNewProject = function (width, height, name) {
+    this.pauseAnimation();
+    this.cancelLassoSelection(true);
+    this.model = new SpriteModel(width, height, name || 'Novo Sprite');
+    this.history.clear();
+    this.history.setContext(this.model.getActiveFrame().id);
+    this.renderer.zoomMultiplier = 1;
+    this.syncUI();
+    this.renderer.render(this.model);
+    this._autoSave();
+  };
+
+  EditorController.prototype.importAOPString = function (jsonString) {
+    // Etapa 3: Valida o arquivo antes de pausar ou alterar qualquer estado do projeto atual
+    var parsed = Storage.deserializeProject(jsonString);
+    this.pauseAnimation();
+    this.cancelLassoSelection(true);
+    this.model = parsed.model;
+    if (parsed.metadata && typeof parsed.metadata.selectedColor === 'number' &&
+        parsed.metadata.selectedColor >= 0 && parsed.metadata.selectedColor <= 15) {
+      this.selectedColor = parsed.metadata.selectedColor;
+    }
+    this.history.clear();
+    this.history.setContext(this.model.getActiveFrame().id);
+    this.renderer.zoomMultiplier = 1;
+    this.syncUI();
+    this.renderer.render(this.model);
+    this._autoSave();
+    return this.model;
+  };
+
+  EditorController.prototype.importJSONString = function (jsonString) {
+    // Etapa 3: Valida o JSON estruturado antes de pausar ou alterar o projeto atual
+    var importedModel = Storage.importStructuredJSON(jsonString);
+    this.pauseAnimation();
+    this.cancelLassoSelection(true);
+    this.model = importedModel;
+    this.history.clear();
+    this.history.setContext(this.model.getActiveFrame().id);
+    this.renderer.zoomMultiplier = 1;
+    this.syncUI();
+    this.renderer.render(this.model);
+    this._autoSave();
+    return this.model;
+  };
+
+  EditorController.prototype._renderSavedProjectsList = function () {
+    var self = this;
+    var container = this.dom.savedProjectsList;
+    if (!container) return;
+    container.innerHTML = '';
+
+    var list = Storage.listSavedProjects();
+    if (list.length === 0) {
+      var emptyMsg = document.createElement('div');
+      emptyMsg.style.padding = '12px';
+      emptyMsg.style.fontSize = '11px';
+      emptyMsg.style.color = '#83769c';
+      emptyMsg.style.textAlign = 'center';
+      emptyMsg.textContent = 'Nenhum projeto salvo localmente ainda.';
+      container.appendChild(emptyMsg);
+      return;
+    }
+
+    for (var i = 0; i < list.length; i++) {
+      (function (proj) {
+        var row = document.createElement('div');
+        row.className = 'aop-saved-item';
+
+        var info = document.createElement('div');
+        info.className = 'aop-saved-info';
+
+        var title = document.createElement('div');
+        title.className = 'aop-saved-name';
+        title.textContent = proj.name || 'Sprite Sem Título';
+
+        var fCount = Array.isArray(proj.frames) ? proj.frames.length : 1;
+        var meta = document.createElement('div');
+        meta.className = 'aop-saved-meta';
+        meta.textContent = proj.width + '×' + proj.height + ' px · ' + fCount + (fCount === 1 ? ' quadro' : ' quadros');
+
+        info.appendChild(title);
+        info.appendChild(meta);
+
+        var actions = document.createElement('div');
+        actions.className = 'aop-saved-buttons';
+
+        var btnOpen = document.createElement('button');
+        btnOpen.type = 'button';
+        btnOpen.className = 'aop-mini-btn';
+        btnOpen.textContent = 'ABRIR';
+        btnOpen.setAttribute('aria-label', 'Abrir projeto ' + (proj.name || ''));
+        btnOpen.addEventListener('click', function () {
+          try {
+            var loaded = Storage.deserializeProject(proj);
+            self.pauseAnimation();
+            self.cancelLassoSelection(true);
+            self.model = loaded.model;
+            self.history.clear();
+            self.history.setContext(self.model.getActiveFrame().id);
+            self.renderer.zoomMultiplier = 1;
+            self.syncUI();
+            self.renderer.render(self.model);
+            self._autoSave();
+            self.dom.modalProjects.hidden = true;
+            self.showToast('Projeto "' + self.model.name + '" reaberto');
+          } catch (err) {
+            self.showToast(err.message || 'Erro ao abrir projeto');
+          }
+        });
+
+        var btnDelete = document.createElement('button');
+        btnDelete.type = 'button';
+        btnDelete.className = 'aop-mini-btn aop-action-btn-danger';
+        btnDelete.textContent = 'EXCLUIR';
+        btnDelete.setAttribute('aria-label', 'Excluir projeto ' + (proj.name || ''));
+        btnDelete.addEventListener('click', function () {
+          Storage.deleteProjectFromDevice(proj.id);
+          self._renderSavedProjectsList();
+        });
+
+        actions.appendChild(btnOpen);
+        actions.appendChild(btnDelete);
+
+        row.appendChild(info);
+        row.appendChild(actions);
+        container.appendChild(row);
+      })(list[i]);
+    }
+  };
+
+  /* ==========================================================================
+     SINCRONIZAÇÃO DE INTERFACE, TELA CHEIA E ORIENTAÇÃO (RETRATO / PAISAGEM)
+     ========================================================================== */
+  EditorController.prototype._getNativeFullscreenElement = function () {
+    return document.fullscreenElement ||
+      document.webkitFullscreenElement ||
+      document.mozFullScreenElement ||
+      document.msFullscreenElement ||
+      null;
+  };
+
+  EditorController.prototype.toggleFullscreen = function () {
+    var self = this;
+    var shell = this.dom.shell || document.documentElement;
+    var nativeFsEl = this._getNativeFullscreenElement();
+
+    if (nativeFsEl || this.fullscreenFallback) {
+      if (nativeFsEl) {
+        var exitFn = document.exitFullscreen ||
+          document.webkitExitFullscreen ||
+          document.mozCancelFullScreen ||
+          document.msExitFullscreen;
+        if (exitFn) {
+          try {
+            var exitResult = exitFn.call(document);
+            if (exitResult && typeof exitResult.catch === 'function') {
+              exitResult.catch(function () {});
+            }
+          } catch (_err) {}
+        }
+      }
+      this.fullscreenFallback = false;
+      this.isFullscreen = false;
+      this.updateOrientation();
+      this.syncUI();
+      this.renderer.render(this.model);
+      this.showToast('Modo de tela cheia desativado');
+      return;
+    }
+
+    var reqFn = shell.requestFullscreen ||
+      shell.webkitRequestFullscreen ||
+      shell.mozRequestFullScreen ||
+      shell.msRequestFullscreen;
+
+    var apiEnabled = (typeof document.fullscreenEnabled === 'boolean')
+      ? document.fullscreenEnabled
+      : (typeof document.webkitFullscreenEnabled === 'boolean' ? document.webkitFullscreenEnabled : true);
+
+    function activateFallback(reasonMsg) {
+      self.fullscreenFallback = true;
+      self.isFullscreen = true;
+      self.updateOrientation();
+      self.syncUI();
+      self.renderer.render(self.model);
+      self.showToast(reasonMsg || 'Tela cheia expandida (API nativa indisponível)');
+    }
+
+    if (!reqFn || !apiEnabled) {
+      activateFallback('Modo expandido ativo (API de tela cheia indisponível no navegador)');
+      return;
+    }
+
+    try {
+      var promise = reqFn.call(shell);
+      if (promise && typeof promise.then === 'function') {
+        promise.then(function () {
+          self.fullscreenFallback = false;
+          self.isFullscreen = true;
+          self.updateOrientation();
+          self.syncUI();
+          self.renderer.render(self.model);
+          self.showToast('Modo de tela cheia ativado');
+        }).catch(function () {
+          activateFallback('Modo expandido ativo (tela cheia nativa bloqueada pelo navegador)');
+        });
+      } else {
+        this.isFullscreen = Boolean(this._getNativeFullscreenElement());
+        if (!this.isFullscreen) {
+          activateFallback('Modo expandido ativo (tela cheia nativa bloqueada)');
+        } else {
+          this.syncUI();
+          this.renderer.render(this.model);
+          this.showToast('Modo de tela cheia ativado');
+        }
+      }
+    } catch (_err) {
+      activateFallback('Modo expandido ativo (tela cheia nativa bloqueada pelo navegador)');
+    }
+  };
+
+  EditorController.prototype._bindLayoutEvents = function () {
+    var self = this;
+    function onResize() {
+      self.updateOrientation();
+      self.renderer.render(self.model);
+    }
+    window.addEventListener('resize', onResize);
+    window.addEventListener('orientationchange', onResize);
+
+    if (this.dom.btnFullscreen) {
+      this.dom.btnFullscreen.addEventListener('click', function () {
+        self.toggleFullscreen();
+      });
+    }
+
+    function onFullscreenChange() {
+      var activeNative = Boolean(self._getNativeFullscreenElement());
+      if (!activeNative && !self.fullscreenFallback) {
+        self.isFullscreen = false;
+      } else if (activeNative) {
+        self.isFullscreen = true;
+      }
+      self.updateOrientation();
+      self.syncUI();
+      self.renderer.render(self.model);
+    }
+
+    document.addEventListener('fullscreenchange', onFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', onFullscreenChange);
+  };
+
+  /* ==========================================================================
+     ETAPA 3: SUPORTE PWA, SERVICE WORKER SEGURO E INSTALAÇÃO NO ANDROID
+     ========================================================================== */
+  EditorController.prototype.shouldRegisterServiceWorker = function (protocol, hostname, isSecureContext) {
+    var normProto = String(protocol || '').toLowerCase();
+    if (normProto !== 'https:' && normProto !== 'http:') {
+      return false;
+    }
+    var normHost = String(hostname || '').toLowerCase();
+    var isLocalhost = (normHost === 'localhost' || normHost === '127.0.0.1' || normHost === '[::1]');
+    return normProto === 'https:' || isLocalhost || Boolean(isSecureContext);
+  };
+
+  EditorController.prototype._updatePWAStatusUI = function () {
+    var proto = window.location ? window.location.protocol : '';
+    var isStandalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) ||
+      Boolean(window.navigator && window.navigator.standalone);
+    var isOnline = (typeof navigator !== 'undefined' && typeof navigator.onLine === 'boolean') ? navigator.onLine : true;
+
+    if (this.dom.pwaModeStatus) {
+      if (isStandalone) {
+        this.dom.pwaModeStatus.textContent = 'Aplicativo Instalado (Standalone)';
+      } else if (proto === 'file:') {
+        this.dom.pwaModeStatus.textContent = 'Arquivo HTML Local Autocontido (file://)';
+      } else {
+        this.dom.pwaModeStatus.textContent = 'Web / PWA Hospedado (' + proto.replace(':', '').toUpperCase() + ')';
+      }
+    }
+
+    if (this.dom.pwaSwStatus) {
+      this.dom.pwaSwStatus.textContent = this.swStatus;
+    }
+
+    if (this.dom.pwaNetStatus) {
+      this.dom.pwaNetStatus.textContent = isOnline ? 'Online' : 'Offline — Operando via Cache Local';
+      this.dom.pwaNetStatus.style.color = isOnline ? 'var(--accent-cyan)' : 'var(--accent-amber)';
+    }
+
+    if (this.dom.btnPwaInstall) {
+      this.dom.btnPwaInstall.hidden = Boolean(isStandalone);
+    }
+  };
+
+  EditorController.prototype._initPWA = function () {
+    var self = this;
+    var loc = window.location || { protocol: '', hostname: '' };
+    var canRegisterSW = ('serviceWorker' in navigator) &&
+      this.shouldRegisterServiceWorker(loc.protocol, loc.hostname, Boolean(window.isSecureContext));
+
+    if (loc.protocol === 'file:') {
+      this.swStatus = 'HTML Local Independente (sem Service Worker)';
+    } else if (!canRegisterSW) {
+      this.swStatus = 'Indisponível neste contexto (requer HTTPS ou localhost)';
+    } else {
+      this.swStatus = 'Registrando cache offline...';
+      navigator.serviceWorker.register('./sw.js', { scope: './' })
+        .then(function (reg) {
+          if (reg.active || reg.installing || reg.waiting) {
+            self.swStatus = 'Ativo — Pronto para uso 100% offline';
+          } else {
+            self.swStatus = 'Registrado';
+          }
+          self._updatePWAStatusUI();
+        })
+        .catch(function () {
+          self.swStatus = 'Modo local ativo (Service Worker restrito pelo navegador)';
+          self._updatePWAStatusUI();
+        });
+    }
+
+    window.addEventListener('beforeinstallprompt', function (e) {
+      e.preventDefault();
+      self.deferredInstallPrompt = e;
+      self._updatePWAStatusUI();
+    });
+
+    window.addEventListener('appinstalled', function () {
+      self.deferredInstallPrompt = null;
+      self._updatePWAStatusUI();
+      if (self.dom.modalPwaInstall) {
+        self.dom.modalPwaInstall.hidden = true;
+      }
+      self.showToast('AOprite instalado na tela inicial!');
+    });
+
+    window.addEventListener('online', function () { self._updatePWAStatusUI(); });
+    window.addEventListener('offline', function () { self._updatePWAStatusUI(); });
+
+    function openPwaModalOrPrompt() {
+      self.pauseAnimation();
+      self._updatePWAStatusUI();
+      if (self.deferredInstallPrompt) {
+        self.deferredInstallPrompt.prompt();
+        self.deferredInstallPrompt.userChoice.then(function (choice) {
+          if (choice && choice.outcome === 'accepted') {
+            self.deferredInstallPrompt = null;
+          }
+          self._updatePWAStatusUI();
+        }).catch(function () {});
+        return;
+      }
+      if (self.dom.modalPwaInstall) {
+        self.dom.modalPwaInstall.hidden = false;
+      }
+    }
+
+    if (this.dom.btnPwaInstall) {
+      this.dom.btnPwaInstall.addEventListener('click', openPwaModalOrPrompt);
+    }
+
+    if (this.dom.btnOpenPwaFromProjects) {
+      this.dom.btnOpenPwaFromProjects.addEventListener('click', function () {
+        if (self.dom.modalProjects) self.dom.modalProjects.hidden = true;
+        self._updatePWAStatusUI();
+        if (self.dom.modalPwaInstall) self.dom.modalPwaInstall.hidden = false;
+      });
+    }
+
+    if (this.dom.btnClosePwaModal) {
+      this.dom.btnClosePwaModal.addEventListener('click', function () {
+        self.dom.modalPwaInstall.hidden = true;
+      });
+    }
+
+    if (this.dom.btnTriggerPwaPrompt) {
+      this.dom.btnTriggerPwaPrompt.addEventListener('click', function () {
+        if (self.deferredInstallPrompt) {
+          self.deferredInstallPrompt.prompt();
+          self.deferredInstallPrompt.userChoice.then(function (choice) {
+            if (choice && choice.outcome === 'accepted') {
+              self.deferredInstallPrompt = null;
+              if (self.dom.modalPwaInstall) self.dom.modalPwaInstall.hidden = true;
+            }
+            self._updatePWAStatusUI();
+          }).catch(function () {});
+        } else {
+          self.showToast('Use o menu ⋮ do navegador no Android → "Instalar aplicativo"');
+        }
+      });
+    }
+
+    this._updatePWAStatusUI();
+  };
+
+  EditorController.prototype.updateOrientation = function () {
+    var vw = window.innerWidth || 360;
+    var vh = window.innerHeight || 640;
+    var mode = vw > vh && vw >= 480 ? 'landscape' : 'portrait';
+    if (this.dom.shell) {
+      this.dom.shell.setAttribute('data-orientation', mode);
+    }
+  };
+
+  EditorController.prototype.syncUI = function () {
+    var entry = Palette.getEntry(this.selectedColor) || PALETTE_ENTRIES[7];
+    var nativeFs = Boolean(this._getNativeFullscreenElement());
+    var fsActive = nativeFs || this.fullscreenFallback;
+    this.isFullscreen = fsActive;
+
+    if (this.dom.shell) {
+      this.dom.shell.setAttribute('data-tool', this.activeTool);
+      this.dom.shell.setAttribute('data-grid', this.renderer.showGrid ? 'on' : 'off');
+      this.dom.shell.setAttribute(
+        'data-fullscreen',
+        nativeFs ? 'true' : (this.fullscreenFallback ? 'fallback' : 'false')
+      );
+      this.dom.shell.setAttribute('data-playing', this.isPlaying ? 'true' : 'false');
+    }
+
+    if (this.dom.btnFullscreen) {
+      this.dom.btnFullscreen.setAttribute('aria-pressed', fsActive ? 'true' : 'false');
+    }
+    if (this.dom.fullscreenLabel) {
+      this.dom.fullscreenLabel.textContent = fsActive ? 'SAIR' : 'TELA';
+    }
+    if (this.dom.fullscreenIconPath) {
+      this.dom.fullscreenIconPath.setAttribute(
+        'd',
+        fsActive
+          ? 'M5 5H2V3h5v5H5V5zm6 0V3h5v5h-2V5h-3zm-6 6v3h2v2H2v-5h3zm8 3v-3h2v5H9v-2h4z'
+          : 'M2 2h5v2H4v3H2V2zm7 0h5v5h-2V4H9V2zM4 9v3h3v2H2V9h2zm10 0v5H9v-2h3V9h2z'
+      );
+    }
+
+    if (this.dom.gridBadge) {
+      this.dom.gridBadge.textContent = this.model.width + '×' + this.model.height;
+    }
+
+    if (this.dom.projectNameDisplay) {
+      this.dom.projectNameDisplay.textContent = this.model.name;
+    }
+
+    if (this.dom.activeSwatch) {
+      if (this.activeTool === 'eraser') {
+        this.dom.activeSwatch.style.backgroundColor = 'transparent';
+        this.dom.activeSwatch.setAttribute('data-transparent', 'true');
+      } else {
+        this.dom.activeSwatch.style.backgroundColor = entry.hex;
+        this.dom.activeSwatch.setAttribute('data-transparent', 'false');
+      }
+    }
+
+    if (this.dom.activeColorIndex) {
+      this.dom.activeColorIndex.textContent = this.activeTool === 'eraser'
+        ? 'TRANSP (.)'
+        : 'COR ' + entry.char;
+    }
+
+    if (this.dom.activeColorHex) {
+      this.dom.activeColorHex.textContent = this.activeTool === 'eraser'
+        ? 'BORRACHA'
+        : entry.hex;
+    }
+
+    if (this.dom.btnToggleGrid) {
+      this.dom.btnToggleGrid.setAttribute('aria-pressed', this.renderer.showGrid ? 'true' : 'false');
+    }
+
+    if (this.dom.zoomDisplay) {
+      this.dom.zoomDisplay.textContent = this.renderer.zoomMultiplier === 1
+        ? 'FIT'
+        : Math.round(this.renderer.zoomMultiplier * 100) + '%';
+    }
+
+    // Atualiza barra contextual da ferramenta LAÇO
+    var showLassoBar = (this.activeTool === 'lasso' || Boolean(this.lassoSelection) || Boolean(this.lassoClipboard));
+    if (this.dom.lassoBar) {
+      this.dom.lassoBar.hidden = !showLassoBar;
+    }
+    if (this.dom.lassoStatus) {
+      if (this.lassoSelection) {
+        this.dom.lassoStatus.textContent =
+          'SEL ' + this.lassoSelection.width + '×' + this.lassoSelection.height +
+          ' (' + this.lassoSelection.x + ',' + this.lassoSelection.y + ') — Arraste p/ mover';
+      } else if (this.lassoClipboard) {
+        this.dom.lassoStatus.textContent = 'LAÇO: Área copiada (' + this.lassoClipboard.width + '×' + this.lassoClipboard.height + ')';
+      } else {
+        this.dom.lassoStatus.textContent = 'LAÇO: Desenhe o contorno';
+      }
+    }
+    if (this.dom.btnLassoCopy) this.dom.btnLassoCopy.disabled = !this.lassoSelection;
+    if (this.dom.btnLassoCut) this.dom.btnLassoCut.disabled = !this.lassoSelection;
+    if (this.dom.btnLassoPaste) this.dom.btnLassoPaste.disabled = !this.lassoClipboard;
+    if (this.dom.btnLassoCancel) this.dom.btnLassoCancel.disabled = !this.lassoSelection;
+
+    // Atualiza Timeline de Animação
+    if (this.dom.btnAnimPlay) {
+      this.dom.btnAnimPlay.setAttribute('aria-pressed', this.isPlaying ? 'true' : 'false');
+      this.dom.btnAnimPlay.textContent = this.isPlaying ? '⏸' : '▶';
+    }
+    if (this.dom.fpsDisplay) {
+      this.dom.fpsDisplay.textContent = this.model.fps + ' FPS';
+    }
+    if (this.dom.btnAnimLoop) {
+      this.dom.btnAnimLoop.setAttribute('aria-pressed', this.model.loop ? 'true' : 'false');
+    }
+    if (this.dom.btnFrameLeft) {
+      this.dom.btnFrameLeft.disabled = (this.model.activeFrameIndex <= 0);
+    }
+    if (this.dom.btnFrameRight) {
+      this.dom.btnFrameRight.disabled = (this.model.activeFrameIndex >= this.model.frames.length - 1);
+    }
+    if (this.dom.btnFrameDel) {
+      this.dom.btnFrameDel.disabled = (this.model.frames.length <= 1);
+    }
+    this._renderTimelineStrip();
+
+    // Atualiza estado das ferramentas
+    for (var i = 0; i < this.dom.toolButtons.length; i++) {
+      var btn = this.dom.toolButtons[i];
+      var tid = btn.getAttribute('data-tool-id');
+      btn.setAttribute('aria-pressed', tid === this.activeTool ? 'true' : 'false');
+    }
+
+    // Atualiza botões Desfazer / Refazer do quadro atual
+    if (this.dom.btnUndo) {
+      this.dom.btnUndo.disabled = !this.history.canUndo();
+    }
+    if (this.dom.btnRedo) {
+      this.dom.btnRedo.disabled = !this.history.canRedo();
+    }
+
+    // Atualiza seleção visual na paleta PICO-8
+    if (this.dom.paletteGrid) {
+      var swatches = this.dom.paletteGrid.querySelectorAll('.aop-swatch-btn');
+      for (var s = 0; s < swatches.length; s++) {
+        var sw = swatches[s];
+        var idx = Number(sw.getAttribute('data-color-index'));
+        sw.setAttribute('aria-pressed', idx === this.selectedColor ? 'true' : 'false');
+      }
+    }
+  };
+
+  AOprite.EditorController = EditorController;
+
+  /* ==========================================================================
+     INICIALIZAÇÃO AUTOMÁTICA
+     ========================================================================== */
+  function bootAOprite() {
+    var editor = new EditorController();
+    editor.init();
+    AOprite.app = editor;
+  }
+
+  if (typeof document !== 'undefined') {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', bootAOprite);
+    } else {
+      bootAOprite();
+    }
+  }
+})(typeof window !== 'undefined' ? window : globalThis);
+    </script>
+  </body>
+</html>
